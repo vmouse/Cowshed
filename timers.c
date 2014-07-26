@@ -1,4 +1,4 @@
-/*
+п»ї/*
  * timers.c
  *
  * Created: 28.05.2014 23:41:20
@@ -15,7 +15,7 @@ void timer_setup(uint8_t timer_index, uint16_t timer_count) {
 		_timers_table.timer_state[timer_index] = TIMER_STATE_STOP;
 		_timers_table.timer_count[timer_index] = timer_count;
 	} else {
-		// а собственно что?
+		// Р° СЃРѕР±СЃС‚РІРµРЅРЅРѕ С‡С‚Рѕ?
 	}
 }
 
@@ -44,7 +44,7 @@ uint8_t timer_iswork(uint8_t timer_index) {
 }
 
 void timers_init(void) {
-	_timers_table.timers_prescaler_cnt=TIMERS_PRESCALER; // предварительный делитель
+	_timers_table.timers_prescaler_cnt=TIMERS_PRESCALER; // РїСЂРµРґРІР°СЂРёС‚РµР»СЊРЅС‹Р№ РґРµР»РёС‚РµР»СЊ
 }
 
 void timer_onEvent(saf_Event event) {
@@ -63,29 +63,29 @@ void timer_onEvent(saf_Event event) {
 			
 			saf_Event newEvent;
 
-			// цикл по всему массиву таймеров
+			// С†РёРєР» РїРѕ РІСЃРµРјСѓ РјР°СЃСЃРёРІСѓ С‚Р°Р№РјРµСЂРѕРІ
 			for (uint8_t i=0; i<TIMERS_MAX; i++) {
-				if (_timers_table.timer_state[i] != TIMER_STATE_STOP) { // подразумеваем, что не стопнутый таймер имеет счетчик >0
-					if (_timers_table.timer_state[i] == TIMER_STATE_START) { // работающий таймер надо уменьшать, а тот что в паузе просто учитывать как еще не закончивший
+				if (_timers_table.timer_state[i] != TIMER_STATE_STOP) { // РїРѕРґСЂР°Р·СѓРјРµРІР°РµРј, С‡С‚Рѕ РЅРµ СЃС‚РѕРїРЅСѓС‚С‹Р№ С‚Р°Р№РјРµСЂ РёРјРµРµС‚ СЃС‡РµС‚С‡РёРє >0
+					if (_timers_table.timer_state[i] == TIMER_STATE_START) { // СЂР°Р±РѕС‚Р°СЋС‰РёР№ С‚Р°Р№РјРµСЂ РЅР°РґРѕ СѓРјРµРЅСЊС€Р°С‚СЊ, Р° С‚РѕС‚ С‡С‚Рѕ РІ РїР°СѓР·Рµ РїСЂРѕСЃС‚Рѕ СѓС‡РёС‚С‹РІР°С‚СЊ РєР°Рє РµС‰Рµ РЅРµ Р·Р°РєРѕРЅС‡РёРІС€РёР№
 						_timers_table.timer_count[i]--; 
 						flags.bits.tick = 1;
-						if (_timers_table.timer_count[i] == 0) {		// таймер досчитал - событие
+						if (_timers_table.timer_count[i] == 0) {		// С‚Р°Р№РјРµСЂ РґРѕСЃС‡РёС‚Р°Р» - СЃРѕР±С‹С‚РёРµ
 							_timers_table.timer_state[i] = TIMER_STATE_STOP;
 							newEvent.value = i;
 							newEvent.code = EVENT_TIMER_END;
 							saf_eventBusSend(newEvent);
-							flags.bits.any_end = 1;							// флаг, что есть закончивший
-						} else flags.bits.all_end = 0;						// флаг, что есть незакончивший 
-					} else { flags.bits.all_end = 0; }						// есть таймер в паузе, т.е. есть незакончивший
+							flags.bits.any_end = 1;							// С„Р»Р°Рі, С‡С‚Рѕ РµСЃС‚СЊ Р·Р°РєРѕРЅС‡РёРІС€РёР№
+						} else flags.bits.all_end = 0;						// С„Р»Р°Рі, С‡С‚Рѕ РµСЃС‚СЊ РЅРµР·Р°РєРѕРЅС‡РёРІС€РёР№ 
+					} else { flags.bits.all_end = 0; }						// РµСЃС‚СЊ С‚Р°Р№РјРµСЂ РІ РїР°СѓР·Рµ, С‚.Рµ. РµСЃС‚СЊ РЅРµР·Р°РєРѕРЅС‡РёРІС€РёР№
 				}
 			}
 			
-			if (flags.bits.tick==1 && flags.bits.all_end==1) { // все таймеры закончили (и никого нет в паузе)
+			if (flags.bits.tick==1 && flags.bits.all_end==1) { // РІСЃРµ С‚Р°Р№РјРµСЂС‹ Р·Р°РєРѕРЅС‡РёР»Рё (Рё РЅРёРєРѕРіРѕ РЅРµС‚ РІ РїР°СѓР·Рµ)
 				newEvent.code = EVENT_ALL_TIMERS_END;
 				saf_eventBusSend(newEvent);
 			}
 	
-			if (flags.bits.tick==1 && flags.bits.any_end==0 ) { // какой-то из таймеров тикнул
+			if (flags.bits.tick==1 && flags.bits.any_end==0 ) { // РєР°РєРѕР№-С‚Рѕ РёР· С‚Р°Р№РјРµСЂРѕРІ С‚РёРєРЅСѓР»
 				newEvent.code = EVENT_TIMER_TICK;
 				saf_eventBusSend(newEvent);
 			}
