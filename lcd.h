@@ -1,4 +1,4 @@
-#ifndef LCD_H
+п»ї#ifndef LCD_H
 #define LCD_H
 
 #include <util/delay.h>
@@ -10,8 +10,8 @@
 #define Idata		PC3 // Register data
 #define Ilatch		PC4 // Register out (latch clock)
 #define Keyboard	PC2	// Keyboard multiplexor
-#define LCD_RS		2	// бит LCD RS
-#define LCD_EN		3   // бит LCD EN
+#define LCD_RS		2	// bit LCD RS
+#define LCD_EN		3   // bit LCD EN
 
 #define 	LCD_CLR          	0      // DB0: clear display
 #define 	LCD_HOME         	1      // DB1: return to home position

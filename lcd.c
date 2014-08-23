@@ -1,4 +1,4 @@
-//Набор функций для обслуживания ЖКИ интерфейс 4-бита 	
+п»ї//РќР°Р±РѕСЂ С„СѓРЅРєС†РёР№ РґР»СЏ РѕР±СЃР»СѓР¶РёРІР°РЅРёСЏ Р–РљР РёРЅС‚РµСЂС„РµР№СЃ 4-Р±РёС‚Р° 	
 #include "lcd.h"            
 
 void Set_Interface_Byte(uint8_t data) {
@@ -10,7 +10,7 @@ void Set_Interface_Byte(uint8_t data) {
 	STROBE(PortInterface, Ilatch);  // Out enable
 }
 
-//-----------Функция записи команды в ЖКИ---------------
+//-----------Р¤СѓРЅРєС†РёСЏ Р·Р°РїРёСЃРё РєРѕРјР°РЅРґС‹ РІ Р–РљР---------------
 void lcd_com(unsigned char p)
 {
 	Set_Interface_Byte(0<<LCD_RS | 1<<LCD_EN | hi_h(p));
@@ -21,7 +21,7 @@ void lcd_com(unsigned char p)
 	_delay_us(10);
 }
 
-//-----------Функция записи данных в ЖКИ----------------
+//-----------Р¤СѓРЅРєС†РёСЏ Р·Р°РїРёСЃРё РґР°РЅРЅС‹С… РІ Р–РљР----------------
 void lcd_dat(unsigned char p)
 {
 	Set_Interface_Byte(1<<LCD_RS | 1<<LCD_EN | hi_h(p));
@@ -32,7 +32,7 @@ void lcd_dat(unsigned char p)
 	_delay_us(10);
 }
 
-// вывод строки на экран в позицию y=hi(pos), x=lo(pos)
+// РІС‹РІРѕРґ СЃС‚СЂРѕРєРё РЅР° СЌРєСЂР°РЅ РІ РїРѕР·РёС†РёСЋ y=hi(pos), x=lo(pos)
 void lcd_out(uint8_t pos, char *str)
 {
 	if (hi(pos)>0) {
@@ -48,15 +48,15 @@ void lcd_out(uint8_t pos, char *str)
 
 void lcd_init(void)
 {
-	lcd_com(0x20);		// инициализация на 4 битную шину
+	lcd_com(0x20);		// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ РЅР° 4 Р±РёС‚РЅСѓСЋ С€РёРЅСѓ
 	lcd_com(0x20);
 	_delay_us(100);
 	lcd_com(0x20);
-	lcd_com(0x28);		// 4 бита, 2 строки
-	lcd_com(0x06);		// пишем слева направо
-	lcd_com(0x0c);		// включить, без курсора
+	lcd_com(0x28);		// 4 Р±РёС‚Р°, 2 СЃС‚СЂРѕРєРё
+	lcd_com(0x06);		// РїРёС€РµРј СЃР»РµРІР° РЅР°РїСЂР°РІРѕ
+	lcd_com(0x0c);		// РІРєР»СЋС‡РёС‚СЊ, Р±РµР· РєСѓСЂСЃРѕСЂР°
 	_delay_us(200);
-	lcd_com(0x01);		// очистка экрана
+	lcd_com(0x01);		// РѕС‡РёСЃС‚РєР° СЌРєСЂР°РЅР°
 	_delay_us(200);
 }
 

@@ -1,4 +1,4 @@
-//  ---------------------------------------------------------------------------//  I2C (TWI) ROUTINES
+﻿//  ---------------------------------------------------------------------------//  I2C (TWI) ROUTINES
 //
 // On the AVRmega series, PA4 is the data line (SDA) and PA5 is the clock (SCL
 // The standard clock rate is 100 KHz, and set by I2C_Init. It depends on the AVR osc. freq.
