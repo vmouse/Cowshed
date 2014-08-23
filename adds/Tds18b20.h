@@ -12,7 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <avr/interrupt.h>
-#include "../saf2core.h"
+#include "saf2core.h"
 
 //--------------- setup
 //musi to byc port typu C: domyslnie PC4

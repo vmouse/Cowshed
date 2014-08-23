@@ -2,17 +2,20 @@
  * Cowshed.c
  *
  * Created: 22.04.2014 20:37:33
- *  Author: vlad
+ *  Author: vlad 
  */ 
-
 #define F_CPU 8000000UL
 #include <avr/io.h>
 #include <stdint.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
 #include "saf2core.h"
-#include "adds/input.h"
+#include "input.h"
 #include "timers.h"
+#include "bits.h"
+#include "lcd.h"
+#include "i2c.h"
+#include "ds1307.h"
 
 #define STATE_INIT	0	// начальное состояние. ждем команд
 #define STATE_WORK	1	// состояние выполнение процесса
@@ -21,36 +24,25 @@
 #define STATE_WAIT	4	// процесс в ожидании или таймера или события порта (использует маску ожидания wait_mask)
 #define STATE_END	5	// программа завершена
 
-// bit operations
-#define bit_get(p,m) ((p) & (m))
-#define bit_set(p,m) ((p) |= (m))
-#define bit_clear(p,m) ((p) &= ~(m))
-#define bit_flip(p,m) ((p) ^= (m))
-#define bit_write(c,p,m) (c ? bit_set(p,m) : bit_clear(p,m))
-#define not_bit_write(c,p,m) (c ? bit_clear(p,m) : bit_set(p,m))
-#define BIT(x) (0x01 << (x))
-#define hi(data)	(data>>4)
-#define lo(data)	(data & 0x0f)
-
 #define CoolStart	(MCUSR & ( 1 << PORF )) // не ноль, если запуск был включением питания
 
-#define NOP asm("nop")
+#define PortControl	PORTB
+#define PCshift		PB1 // Register strobe (shift clock)
+#define PCdata		PB0 // Register data
+#define PClatch		PB2 // Register out (latch clock)
 
-#define Pshift		PB1 // Register strobe (shift clock)
-#define Pdata		PB0 // Register data
-#define Platch		PB2 // Register out (latch clock)
 #define Sensor		PD3 // Sensor multiplexor
-#define Ishift		PC5 // Register strobe (shift clock)
-#define Idata		PC3 // Register data
-#define Ilatch		PC4 // Register out (latch clock)
-#define Keyboard	PC2	// Keyboard multiplexor
 
-#define DELAY NOP;
-// raise level strobe 010
-#define SHIFT_REG DELAY;bit_set(PORTD,BIT(Pshift));DELAY;bit_clear(PORTD,BIT(Pshift));
-#define OUT_REG DELAY;bit_set(PORTD,BIT(Platch));DELAY;bit_clear(PORTD,BIT(Platch));
-// write data low bit in port
-#define write_data_bit(data)	bit_write(data & 1, PORTD, BIT(Pdata)); SHIFT_REG;
+
+
+void Set_Control_Byte(uint8_t data) {
+	for (uint8_t i=0;i<8;i++) {
+		SENDBIT(PortControl, PCdata, data);
+		STROBE(PortControl, PCshift);   // Shift
+		data = data << 1;
+	}
+	STROBE(PortControl, PClatch);  // Out enable
+}
 
 
 uint8_t portdata = 0;			// что выводим в порты
@@ -197,12 +189,7 @@ const _cmd_type CmdArray[] = {
 };  // test port output
 
 
-void write_data(uint8_t data) {
-	for (uint8_t i=0;i<8;i++) {
-		write_data_bit(data); data = data >> 1;
-	}
-}
-
+/*
 void Dynamic_Indication(void) {
 	write_data((1<<ind_digit)<<4);  // выбрать сегмент
 	write_data(ind_data[ind_digit]);  // вывести число
@@ -210,6 +197,7 @@ void Dynamic_Indication(void) {
 	ind_digit++;
 	if (ind_digit>3) { ind_digit=0; }
 }
+*/
 
 void OutSignalPort(uint8_t data) {
 	PORTC = ~(data & 0b00111111);
@@ -459,19 +447,22 @@ void RestFlash(void) {
 	wait_mask.value = flash_wait_mask;
 }
 
+
+
+
 int main(void)
 {
 
 	DDRD = 0xff;
 	DDRC = 1<<Ishift|1<<Idata|1<<Ilatch;
-	DDRB = 1<<Pshift|1<<Pdata|1<<Platch;
+	DDRB = 1<<PCshift|1<<PCdata|1<<PClatch;
 	PORTC = 0xff;
 	PORTB = 0xff;
+	PORTD = 0xff;
 
+//	ResetState();
 
-	ResetState();
-
-
+/*
 	// Simple AVR framework
 	saf_init();
 	timers_init();
@@ -486,14 +477,23 @@ int main(void)
 
 	sei();
 
+
+//	if (CoolStart != 0) {
+//		RestFlash();
+//		if (state.bits.end !=0 ) { // запомнилось окончание программы
+//			ResetState();
+//		}
+//	}
+
+*/
+	
+// Indicator test
+lcd_init();
+while (1) {
+lcd_out(0x05, "Hello");
+lcd_out(0x16, "World");
+}
 /*
-	if (CoolStart != 0) {
-		RestFlash();
-		if (state.bits.end !=0 ) { // запомнилось окончание программы
-			ResetState();
-		}
-	}
-*/	
     while(1)
     {
 		saf_process();
@@ -503,9 +503,10 @@ int main(void)
 		} else if (state.bits.waiting == 0 && state.bits.started == 1) {
 			Do_Command();
 		}
-
-		Dynamic_Indication();
+//		Dynamic_Indication();
     }
+*/
+
 }
 
 
