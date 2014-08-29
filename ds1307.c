@@ -21,7 +21,7 @@ void DS1307_GetDate(uint8_t *months, uint8_t *days, uint8_t *years)
 	*years = I2C_ReadRegister(DS1307,YEARS_REGISTER);
 }
 
-void SetTimeDate()
+void SetTimeDate(void)
 // simple, hard-coded way to set the date.
 {
 	I2C_WriteRegister(DS1307,MONTHS_REGISTER,  0x08);
@@ -40,7 +40,7 @@ void LCD_Hex(int data)
 	lcd_out(0,"ER");  // display it on LCD
 }
 
-void ShowDevices()
+void ShowDevices(void)
 // Scan I2C addresses and display addresses of all devices found
 {
 	lcd_out(0x00,"Found:");
@@ -64,7 +64,7 @@ void LCD_TwoDigits(uint8_t data)
 	lcd_dat(data+'0');
 }
 
-void WriteDate()
+void WriteDate(void)
 {
 	uint8_t months, days, years;
 	DS1307_GetDate(&months,&days,&years);
@@ -75,7 +75,7 @@ void WriteDate()
 	LCD_TwoDigits(years);
 }
 
-void WriteTime()
+void WriteTime(void)
 {
 	uint8_t hours, minutes, seconds;
 	DS1307_GetTime(&hours,&minutes,&seconds);
@@ -86,7 +86,7 @@ void WriteTime()
 	LCD_TwoDigits(seconds);
 }
 
-void LCD_TimeDate()
+void LCD_TimeDate(void)
 {
 	lcd_out(0x00,"");  WriteTime();
 	lcd_out(0x10,"");  WriteDate();

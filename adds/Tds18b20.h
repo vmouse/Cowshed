@@ -5,6 +5,8 @@
 #ifndef TDS18B20_H_
 #define TDS18B20_H_
 
+#define F_CPU 8000000UL
+
 #include <inttypes.h>
 #include <avr/io.h>
 #include <util/delay.h>

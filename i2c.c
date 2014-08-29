@@ -3,7 +3,6 @@
 // On the AVRmega series, PA4 is the data line (SDA) and PA5 is the clock (SCL
 // The standard clock rate is 100 KHz, and set by I2C_Init. It depends on the AVR osc. freq.
 #include "i2c.h"
-#define F_CPU 8000000UL
 
 void I2C_Init()
 // at 16 MHz, the SCL frequency will be 16/(16+2(TWBR)), assuming prescalar of 0.

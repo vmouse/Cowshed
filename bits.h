@@ -24,7 +24,7 @@
 #define lo_h(data)	(data << 4)
 
 #define NOP asm("nop")
-#define DELAY NOP;
+#define DELAY NOP;NOP;NOP;
 
 #define STROBE(OutPort,StrobePin) DELAY;bit_set(OutPort,BIT(StrobePin));DELAY;bit_clear(OutPort,BIT(StrobePin));
 #define SENDBIT(OutPort,DataPin,data)	bit_write(data & 0x80, OutPort, BIT(DataPin));

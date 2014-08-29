@@ -5,6 +5,8 @@
 #include <avr/io.h>
 #include "i2c.h"
 
+#define F_CPU 8000000UL
+
 #define DS1307  0xD0  // I2C bus address of DS1307 RTC
 #define SECONDS_REGISTER  0x00
 #define MINUTES_REGISTER  0x01

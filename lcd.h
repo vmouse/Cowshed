@@ -4,37 +4,57 @@
 #include <util/delay.h>
 #include "bits.h"
 #include <avr/io.h>
+#include <avr/interrupt.h>
 
 #define PortInterface PORTC
-#define Ishift		PC5 // Register strobe (shift clock)
+#define Ishift		PC1 // Register strobe (shift clock)
 #define Idata		PC3 // Register data
-#define Ilatch		PC4 // Register out (latch clock)
+#define Ilatch		PC0 // Register out (latch clock)
 #define Keyboard	PC2	// Keyboard multiplexor
 #define LCD_RS		2	// bit LCD RS
 #define LCD_EN		3   // bit LCD EN
 
-#define 	LCD_CLR          	0      // DB0: clear display
-#define 	LCD_HOME         	1      // DB1: return to home position
+// commands
+#define LCD_CLEARDISPLAY 0x01
+#define LCD_RETURNHOME 0x02
+#define LCD_ENTRYMODESET 0x04
+#define LCD_DISPLAYCONTROL 0x08
+#define LCD_CURSORSHIFT 0x10
+#define LCD_FUNCTIONSET 0x20
+#define LCD_SETCGRAMADDR 0x40
+#define LCD_SETDDRAMADDR 0x80
 
-#define  	LCD_ENTRY_MODE   	2      // DB2: set entry mode
-#define 	LCD_ENTRY_INC    	1      //   DB1: increment
-#define 	LCD_ENTRY_SHIFT  	0      //   DB2: shift
+// flags for display entry mode
+#define LCD_ENTRYRIGHT 0x00
+#define LCD_ENTRYLEFT 0x02
+#define LCD_ENTRYSHIFTINCREMENT 0x01
+#define LCD_ENTRYSHIFTDECREMENT 0x00
 
-#define 	LCD_ON		      	3      // DB3: turn lcd/cursor on
-#define  	LCD_ON_DISPLAY   	2      //   DB2: turn display on
-#define  	LCD_ON_CURSOR     	1      //   DB1: turn cursor on
-#define  	LCD_ON_BLINK      	0      //   DB0: blinking cursor
+// flags for display on/off control
+#define LCD_DISPLAYON 0x04
+#define LCD_DISPLAYOFF 0x00
+#define LCD_CURSORON 0x02
+#define LCD_CURSOROFF 0x00
+#define LCD_BLINKON 0x01
+#define LCD_BLINKOFF 0x00
 
-#define  	LCD_MOVE          	4      // DB4: move cursor/display
-#define 	LCD_MOVE_DISP       3      //   DB3: move display (0-> move cursor)
-#define  	LCD_MOVE_RIGHT      2      //   DB2: move right (0-> left)
+// flags for display/cursor shift
+#define LCD_DISPLAYMOVE 0x08
+#define LCD_CURSORMOVE 0x00
+#define LCD_MOVERIGHT 0x04
+#define LCD_MOVELEFT 0x00
 
-#define  	LCD_F		        5      // DB5: function set
-#define 	LCD_F_8B		   	4      //   DB4: set 8BIT mode (0->4BIT mode)
-#define  	LCD_F_2L			3      //   DB3: two lines (0->one line)
-#define  	LCD_F_10D			2      //   DB2: 5x10 font (0->5x7 font)
-#define  	LCD_CGRAM           6      // DB6: set CG RAM address
-#define  	LCD_DDRAM           7      // DB7: set DD RAM address
+// flags for function set
+#define LCD_8BITMODE 0x10
+#define LCD_4BITMODE 0x00
+#define LCD_2LINE 0x08
+#define LCD_1LINE 0x00
+#define LCD_5x10DOTS 0x04
+#define LCD_5x8DOTS 0x00
+
+// enum for
+#define LCD_DRAM_Normal 0x00
+#define LCD_DRAM_WH1601 0x01
 
 void lcd_init(void); 
 void lcd_com(unsigned char p);
