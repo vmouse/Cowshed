@@ -21,23 +21,26 @@ void DS1307_GetDate(uint8_t *months, uint8_t *days, uint8_t *years)
 	*years = I2C_ReadRegister(DS1307,YEARS_REGISTER);
 }
 
-void SetTimeDate(void)
+// data in BCD format 0x14, 0x9, 0x5, 0x11, 0x37 => 2014-09-05 11:37
+void SetTimeDate(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min)
 // simple, hard-coded way to set the date.
 {
-	I2C_WriteRegister(DS1307,MONTHS_REGISTER,  0x08);
-	I2C_WriteRegister(DS1307,DAYS_REGISTER,  0x31);
-	I2C_WriteRegister(DS1307,YEARS_REGISTER,  0x13);
-	I2C_WriteRegister(DS1307,HOURS_REGISTER,  0x08+0x40);  // add 0x40 for PM
-	I2C_WriteRegister(DS1307,MINUTES_REGISTER, 0x51);
+	I2C_WriteRegister(DS1307,MONTHS_REGISTER,  month);
+	I2C_WriteRegister(DS1307,DAYS_REGISTER,  day);
+	I2C_WriteRegister(DS1307,YEARS_REGISTER,  year);
+	I2C_WriteRegister(DS1307,HOURS_REGISTER, hour);		// 0x08+0x40);  // add 0x40 for PM
+	I2C_WriteRegister(DS1307,MINUTES_REGISTER, min);
 	I2C_WriteRegister(DS1307,SECONDS_REGISTER, 0x00);
 }
 
 //  ---------------------------------------------------------------------------//  APPLICATION ROUTINES
 
-void LCD_Hex(int data)
+void LCD_Hex(uint8_t data)
 // displays the hex value of DATA at current LCD cursor position
-{
-	lcd_out(0,"ER");  // display it on LCD
+{	
+	char	hex[]="0123456789ABCDEF";
+	lcd_dat(hex[data>>4]);  // display it on LCD
+	lcd_dat(hex[data&0x0f]); 
 }
 
 void ShowDevices(void)
@@ -68,10 +71,12 @@ void WriteDate(void)
 {
 	uint8_t months, days, years;
 	DS1307_GetDate(&months,&days,&years);
-	LCD_TwoDigits(months);
-	lcd_dat('/');
 	LCD_TwoDigits(days);
-	lcd_dat('/');
+	lcd_dat('.');
+	LCD_TwoDigits(months);
+	lcd_dat('.');
+	lcd_dat('2');
+	lcd_dat('0');
 	LCD_TwoDigits(years);
 }
 
@@ -88,6 +93,6 @@ void WriteTime(void)
 
 void LCD_TimeDate(void)
 {
-	lcd_out(0x00,"");  WriteTime();
-	lcd_out(0x10,"");  WriteDate();
+	lcd_out(0x03,"");  WriteDate();
+	lcd_out(0x14,"");  WriteTime();
 }

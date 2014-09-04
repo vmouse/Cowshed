@@ -411,7 +411,7 @@ int main(void)
 	DDRB = 1<<PCshift|1<<PCdata|1<<PClatch;
 	PORTC = 0xff;
 	PORTB = 0xff;
-	PORTD = 0x0;
+	PORTD = 0xff;
 
 //	ResetState();
 
@@ -441,11 +441,14 @@ int main(void)
 
 // Indicator test
 	lcd_init();
-	lcd_out(0x03, "Cowshed v2");
+//	lcd_out(0x03, "Cowshed v2");
+
+//	SetTimeDate(0x14, 0x09, 0x05, 0x01, 0x22);
 
     while(1)
     {
-		lcd_out(0x17, "");lcd_dat(ReadKey());
+		LCD_TimeDate();
+//		lcd_out(0x1f, "");lcd_dat(ReadKey());
 //		saf_process();
 /*		
 		if (state.bits.end) {

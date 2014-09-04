@@ -19,6 +19,8 @@
 #define RAM_BEGIN  0x08
 #define RAM_END  0x3F
 
-
+void ShowDevices(void);
+void LCD_TimeDate(void);
+void SetTimeDate(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min);
 
 #endif /* DS1307_H_ */
