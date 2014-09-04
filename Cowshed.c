@@ -6,6 +6,7 @@
  */ 
 #define F_CPU 8000000UL
 #include <avr/io.h>
+#include <string.h>
 #include <stdint.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
@@ -182,42 +183,6 @@ void OutSignalPort(uint8_t data) {
 //	PORTB = ~((data >> 6) & 1);
 }
 
-// BCD function from http://homepage.cs.uiowa.edu/~jones/bcd/decimal.html
-char* shift_and_mul_utoa16(uint16_t n, uint8_t *buffer, uint8_t zerro_char)
-{
-	uint8_t d4, d3, d2, d1, q, d0;
-
-	d1 = (n>>4)  & 0xF;
-	d2 = (n>>8)  & 0xF;
-	d3 = (n>>12) & 0xF;
-
-	d0 = 6*(d3 + d2 + d1) + (n & 0xF);
-	q = (d0 * 0xCD) >> 11;
-	d0 = d0 - 10*q;
-
-	d1 = q + 9*d3 + 5*d2 + d1;
-	q = (d1 * 0xCD) >> 11;
-	d1 = d1 - 10*q;
-
-	d2 = q + 2*d2;
-	q = (d2 * 0x1A) >> 8;
-	d2 = d2 - 10*q;
-
-	d3 = q + 4*d3;
-	d4 = (d3 * 0x1A) >> 8;
-	d3 = d3 - 10*d4;
-
-	char *ptr = buffer;
-	*ptr++ = ( d4 + zerro_char );
-	*ptr++ = ( d3 + zerro_char );
-	*ptr++ = ( d2 + zerro_char );
-	*ptr++ = ( d1 + zerro_char );
-	*ptr++ = ( d0 + zerro_char );
-	*ptr = 0;
-
-	while(buffer[0] == '0') ++buffer;
-	return buffer;
-}
 
 void ShowData(uint8_t step, uint16_t data) {
 	if (data>99) { data = data / 100; } else data = data / 100;
@@ -425,15 +390,28 @@ void RestFlash(void) {
 	wait_mask.value = flash_wait_mask;
 }
 
+char ReadKey() {
+	char str[] = "4*1750286#39BDAC";
+	uint8_t col = 0; // 2,3 bits = row (4,5,6,7), 0,1 bits = col (0,1,2,3)
+	while (col<0x10) {
+		Set_Interface_Byte( ((~(1<<(col>>2)))<<4) | (col & 0x03));
+		if ((PINC & BIT(Keyboard))==0) {
+			return str[col];
+		}
+		col++;
+	}
+	return 0;	
+}
+
 int main(void)
 {
 
-	DDRD = 0xff;
+	DDRD = 0x0;
 	DDRC = 1<<Ishift|1<<Idata|1<<Ilatch;
 	DDRB = 1<<PCshift|1<<PCdata|1<<PClatch;
 	PORTC = 0xff;
 	PORTB = 0xff;
-	PORTD = 0xff;
+	PORTD = 0x0;
 
 //	ResetState();
 
@@ -460,12 +438,14 @@ int main(void)
 //		}
 //	}
 
+
 // Indicator test
-    while(1)
-    {
 	lcd_init();
 	lcd_out(0x03, "Cowshed v2");
-//	lcd_dat('0');
+
+    while(1)
+    {
+		lcd_out(0x17, "");lcd_dat(ReadKey());
 //		saf_process();
 /*		
 		if (state.bits.end) {
