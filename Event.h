@@ -25,4 +25,7 @@
 #define EVENT_TIMER_TICK	21
 #define EVENT_TIMER_END		22
 #define EVENT_ALL_TIMERS_END	23
+#define EVENT_KEY_DOWN		24
+#define EVENT_KEY_UP		25
+#define EVENT_INT0			26
 

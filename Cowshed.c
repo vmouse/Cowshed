@@ -4,19 +4,19 @@
  * Created: 22.04.2014 20:37:33
  *  Author: vlad 
  */ 
-#define F_CPU 8000000UL
 #include <avr/io.h>
 #include <string.h>
 #include <stdint.h>
 #include <util/delay.h>
 #include <avr/eeprom.h>
 #include "saf2core.h"
-#include "input.h"
+//#include "input.h"
 #include "timers.h"
 #include "bits.h"
 #include "lcd.h"
 #include "i2c.h"
 #include "ds1307.h"
+#include "keymatrix.h"
 
 #define STATE_INIT	0	// начальное состояние. ждем команд
 #define STATE_WORK	1	// состояние выполнение процесса
@@ -83,9 +83,10 @@ typedef struct {
 } _cmd_type;
 
 void SaveFlash(void);
+void ResetState(void);
 
 // Фиксированные периоды для таймеров
-uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
+uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, /*5*60*/10, 5*60};
 // 0 - сюда будем замерять время
 // 1 - 30 сек, перекачка моющего раствора 1
 // 2 - 30 сек, перекачка моющего раствора 2
@@ -99,12 +100,12 @@ uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60
 
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
 const _cmd_type CmdArray[] = {
-   {'T', 0x02}, // 0: Взводим таймер на t4 = 15 мин
-   {'W', 0x02}, // 1: Кончилась вода|Закончилась мойка
-/*
+//   {'T', 0x02}, // 0: Взводим таймер на t4 = 15 мин
+//   {'W', 0x02}, // 1: Кончилась вода|Закончилась мойка
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
    {'W', 0x81}, // 02: Ждем наполнения или ошибки окончания таймера
+/*
    {'P', 0x70}, // 03: начать полоскание достаточно теплой водой
    {'T', 0x03}, // 04: Взводим таймер на t3 = 5 мин
    {'W', 0x00}, // 05: Ждем таймер
@@ -178,93 +179,82 @@ void Dynamic_Indication(void) {
 }
 */
 
-void OutSignalPort(uint8_t data) {
-//	PORTC = ~(data & 0b00111111);
-//	PORTB = ~((data >> 6) & 1);
+// Show command by index
+void ShowCmd(uint16_t cmd_index) {
+	_cmd_type Cmd = CmdArray[cmd_index];
+	char buf[6];
+	shift_and_mul_utoa16(cmd_index+1, buf, 0x30); // bcd convertion
+	lcd_pos(0x10);
+	lcd_out(buf+2); lcd_out(": "); 
+	lcd_dat(Cmd.cmd_name); lcd_hex(Cmd.cmd_data);
 }
 
+// Show seconds counter value 
+void ShowTime(uint16_t data) {
+	uint8_t mins = data / 60; if (mins>99) mins=99;
+	uint8_t secs = data % 60;
 
-void ShowData(uint8_t step, uint16_t data) {
-	if (data>99) { data = data / 100; } else data = data / 100;
-
-	uint8_t buf[5];
-	shift_and_mul_utoa16(data, buf, 0); // bcd convertion
-
-	//uint8_t bufind  = 3;
-	//ind_data[2] = sseg[step & 15] & 254 ; step >>= 4;
-	//ind_data[3] = sseg[step & 15];
-	//ind_data[1] = sseg[buf[bufind]]; bufind++;
-	//ind_data[0] = sseg[buf[bufind]]; 
-}
-
-void ShowTime(uint8_t step, uint16_t data) {
-	if (data>59) { data = data / 59; } else data = data % 60;
-
-	uint8_t buf[5];
-	shift_and_mul_utoa16(data, buf, 0); // bcd convertion
-
-	//uint8_t bufind  = 3;
-	//ind_data[2] = sseg[step & 15] & 254 ; step >>= 4;
-	//ind_data[3] = sseg[step & 15];
-	//ind_data[1] = sseg[buf[bufind]]; bufind++;
-	//ind_data[0] = sseg[buf[bufind]];
+	lcd_pos(0x1b);
+	char buf[6];
+	shift_and_mul_utoa16(mins, buf, 0x30); 
+	lcd_out(buf+3);lcd_dat(':');
+	shift_and_mul_utoa16(secs, buf, 0x30); 
+	lcd_out(buf+3);
 }
 
 void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 	timer_stop(-1); // stop all timers
 	state.bits.error=1;
 	state.bits.started = 0;
-	//ind_data[0] = sseg[lo(ErrorCode)];
-	//ind_data[1] = sseg[hi(ErrorCode)];
-	//ind_data[2] = ~2;
-	//switch (ErrorClass) {
-		//case 0: // Execution error
-			//ind_data[3] = 97;	//E
-			//break;
-		//case 1:	// Synax error 
-			//ind_data[3] = 73;	//S
-			//break;
-		//case 2:	// timeout error
-			//ind_data[3] = 225;	//t
-			//break;
-		//default: // other error
-			//ind_data[3] = sseg[ErrorClass & 0x0f];	//E
-			//break;
-	//}
+
+	char buf[6];
+	shift_and_mul_utoa16(ErrorCode+1, buf, 0x30); // bcd convertion
+
+	lcd_clear();
+	lcd_pos(0x04);	lcd_out((uint8_t[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
+//	lcd_pos(0x10);	lcd_out((uint8_t[]){99,191,112,58,0}); lcd_out(buf+2); // "стр:"+ErrorCode
+//	lcd_out((uint8_t[]){32,191,184,190,58,0}); //" тип: "
+	ShowCmd(ErrorCode);
+	lcd_dat(' ');
+	switch (ErrorClass) {
+		case 0: // Execution error
+			lcd_out("Execute");
+			break;
+		case 1:	// Synax error 
+			lcd_out("Syntax");
+			break;
+		case 2:	// timeout error
+			lcd_out("Timeout");
+			break;
+		default: // other error
+			lcd_hex(ErrorClass);
+			break;
+	}
 }
 
 void ShowEnd(void) {
 	timer_stop(-1); // stop all timers
-	lcd_out(0,"End.");
-	//ind_data[3] = 97;	//E
-	//ind_data[2] = 213;	//n
-	//ind_data[1] = 133;	//d
-	//ind_data[0] = 254;	//.
-}
-
-void ShowMinus(void) {
-	lcd_out(0,"-----------------");
-	//ind_data[0]=sseg[17];
-	//ind_data[1]=sseg[17];
-	//ind_data[2]=sseg[17]; // минус
-	//ind_data[3]=sseg[17];
+	lcd_clear(); 
+	lcd_pos(0x03);
+	lcd_out((uint8_t[]){66,195,190,111,187,189,101,189,111,46,0}); // Выполнено.
 }
 
 void Do_Command(void) {			// выполнение комманды программы
 	if (cmd_index>=sizeof(CmdArray)/sizeof(CmdArray[0])) {
 		state.bits.started = 0;
 		state.bits.end = 1;
+		ShowEnd();
 	} else {
 
 	_cmd_type Cmd = CmdArray[cmd_index];
 
-	ShowData(cmd_index, Cmd.cmd_data);
+	ShowCmd(cmd_index);
 
 	uint16_t time;
 
 	switch (Cmd.cmd_name) {
 		case 'P':	// вывод в порт
-			OutSignalPort(Cmd.cmd_data);
+			Set_Control_Byte(Cmd.cmd_data);
 			break;
 		case 'T':	// инициализация таймера
 			timer_setup(hi(Cmd.cmd_data), TimersArray[lo(Cmd.cmd_data)]);
@@ -323,6 +313,23 @@ void Do_Command(void) {			// выполнение комманды програ�
 
 void onEvent(saf_Event event)
 {
+	if (event.code == EVENT_KEY_DOWN)
+	{
+		switch (event.value) {
+			case 'A': // start button
+				if (state.bits.started == 0) {
+					cmd_index = 0;
+					state.value = 1; // все флаги сбрасываем, кроме старта
+					lcd_clear();
+				}
+				break;
+			case '*': // reset
+				ResetState();
+				break;
+			default: break;
+		}
+	}
+
 	if (event.code == EVENT_IN_DOWN)
 	{
 		switch (event.value) {
@@ -330,7 +337,6 @@ void onEvent(saf_Event event)
 				if (state.bits.started == 0) {
 					cmd_index = 0;
 					state.value = 1; // все флаги сбрасываем, кроме старта
-					
 				}
 				break;
 			case 1: // high level sensor
@@ -351,8 +357,8 @@ void onEvent(saf_Event event)
 	} else if (event.code == EVENT_TIMER_TICK) // отображаем прогресс таймера 0
 	{	
 		if (timer_iswork(0)==1) {
-			ShowTime(cmd_index-1, timer_get(0));
-		} else 	ShowTime(cmd_index-1, timer_get(1));
+			ShowTime(timer_get(0));
+		} else 	ShowTime(timer_get(1));
 	} else if (event.code == EVENT_TIMER_END) // таймер закончил
 	{
 		if (state.bits.waiting == 1) {
@@ -368,12 +374,13 @@ void onEvent(saf_Event event)
 	} 
 }
 
-void	ResetState(void) {
+void ResetState(void) {
 	state.value = 0;
 	wait_mask.value = 0;
 	cmd_index = 0;
-	ShowMinus();
-	OutSignalPort(0);
+	timer_stop(-1);
+	lcd_clear(); lcd_out(" Covshed  ver.2");
+	Set_Control_Byte(0);
 }
 
 void SaveFlash(void) {
@@ -390,22 +397,26 @@ void RestFlash(void) {
 	wait_mask.value = flash_wait_mask;
 }
 
-char ReadKey() {
-	char str[] = "4*1750286#39BDAC";
-	uint8_t col = 0; // 2,3 bits = row (4,5,6,7), 0,1 bits = col (0,1,2,3)
-	while (col<0x10) {
-		Set_Interface_Byte( ((~(1<<(col>>2)))<<4) | (col & 0x03));
-		if ((PINC & BIT(Keyboard))==0) {
-			return str[col];
-		}
-		col++;
+void onEvent_test(saf_Event event)
+{
+	if (event.code == EVENT_KEY_DOWN)
+	{
+		lcd_dat(event.value);
+	} else 	if (event.code == EVENT_INT0)
+	{
+//		lcd_dat('!');
+//		lcd_pos(0x14);  LCD_Time();
+		ShowCmd(cmd_index);
+		ShowTime(60);
+		cmd_index++;
 	}
-	return 0;	
+
 }
 
 int main(void)
 {
 
+	// Hardware initialization
 	DDRD = 0x0;
 	DDRC = 1<<Ishift|1<<Idata|1<<Ilatch;
 	DDRB = 1<<PCshift|1<<PCdata|1<<PClatch;
@@ -413,11 +424,17 @@ int main(void)
 	PORTB = 0xff;
 	PORTD = 0xff;
 
-//	ResetState();
+	lcd_init();
+	DS1307_Init();
+//	SetTimeDate(0x14, 0x09, 0x06, 0x02, 0x37); // Set time into 1307 chip
 
-	// Simple AVR framework
-//	saf_init();
+	// State machine initialization
+	ResetState();
+
+	// Simple AVR framework (SAF) initializationwaa
+	saf_init();
 //	timers_init();
+	timers_init(EVENT_INT0, 0);
 
 //	input_add(_D, 7); // Start button
 //	input_add(_D, 2); // Liquid high level sensor
@@ -426,9 +443,13 @@ int main(void)
 //	saf_addEventHandler(onEvent);
 //	saf_addEventHandler(input_onEvent);
 
-//	saf_addEventHandler(timer_onEvent);
+	saf_addEventHandler(onEvent);
+	saf_addEventHandler(KeyMatrix_onEvent);
+	saf_addEventHandler(timers_onEvent);
 
-//	sei();
+
+	// Start
+	sei();
 
 
 //	if (CoolStart != 0) {
@@ -439,25 +460,17 @@ int main(void)
 //	}
 
 
-// Indicator test
-	lcd_init();
-//	lcd_out(0x03, "Cowshed v2");
-
-//	SetTimeDate(0x14, 0x09, 0x05, 0x01, 0x22);
 
     while(1)
     {
-		LCD_TimeDate();
-//		lcd_out(0x1f, "");lcd_dat(ReadKey());
-//		saf_process();
-/*		
-		if (state.bits.end) {
-			ShowEnd(); 
+//		LCD_TimeDate();
+		saf_process();
+		
+		if (state.bits.end || state.value==0) {
+			lcd_pos(0x14); LCD_Time(); 
 		} else if (state.bits.waiting == 0 && state.bits.started == 1) {
 			Do_Command();
 		}
-*/		
-//		Dynamic_Indication();
     }
 }
 

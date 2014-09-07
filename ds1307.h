@@ -5,8 +5,6 @@
 #include <avr/io.h>
 #include "i2c.h"
 
-#define F_CPU 8000000UL
-
 #define DS1307  0xD0  // I2C bus address of DS1307 RTC
 #define SECONDS_REGISTER  0x00
 #define MINUTES_REGISTER  0x01
@@ -19,7 +17,10 @@
 #define RAM_BEGIN  0x08
 #define RAM_END  0x3F
 
+void DS1307_Init(void);
 void ShowDevices(void);
+void LCD_Time(void);
+void LCD_Date(void);
 void LCD_TimeDate(void);
 void SetTimeDate(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min);
 

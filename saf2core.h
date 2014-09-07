@@ -16,9 +16,10 @@
 #define SAF_LISTENER_SIZE 					4
 #define SAF_EVENT_BUFFOR_SIZE				32
 #define SAF_EVENT_VALUE_T					uint8_t
-#define SAF_TIMER_ENABLED					1
+#define SAF_TIMER_ENABLED					0
 #define SAF_TIMER_SIZE						4
 #define SAF_TICK_ENABLED					1
+#define SAF_INT0_ENABLED					1
 #define SAF_CONFIG_EXTRA_EVENT_VALUE_ENABLE 0
 #define SAF_CONFIG_EXTRA_EVENT_VALUE1	//mozesz dodac dodatkowe pola struktury saf_Event
 #define SAF_CONFIG_EXTRA_EVENT_VALUE2	//przyklad

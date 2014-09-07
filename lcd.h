@@ -61,9 +61,13 @@ void lcd_send_niddle(uint8_t data, uint8_t RS_bit);
 void lcd_init(void); 
 void lcd_com(unsigned char p);
 void lcd_dat(unsigned char p);
-void lcd_out(uint8_t pos, char *str);
+void lcd_clear(void);
+void lcd_pos(uint8_t pos);
+void lcd_out(char *str);
+void lcd_hex(uint8_t data);
+void lcd_bits(uint8_t n, uint8_t zerro_char);
+
 char* shift_and_mul_utoa16(uint16_t n, uint8_t *buffer, uint8_t zerro_char);
-char* bits_to_string(uint8_t n, uint8_t *buffer, uint8_t zerro_char);
 
 #endif
 

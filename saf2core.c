@@ -45,6 +45,11 @@ void saf_init() {
 #if SAF_TIMER_ENABLED == 1
 	_saf_timerInit();
 #endif
+#if SAF_INT0_ENABLED == 1
+	GICR = (0<<INT1)|(1<<INT0);
+	MCUCR = (1<<ISC01)|(0<<ISC00);
+	sei();
+#endif
 }
 
 
@@ -123,6 +128,12 @@ uint8_t 	_saf_ringbufferAvailable() {
 void _saf_ringbufferFlush(){
 	saf.buffer.head = saf.buffer.tail;
 }
+
+#if SAF_INT0_ENABLED == 1
+SIGNAL(INT0_vect) {
+	saf_eventBusSend_(EVENT_INT0, 0);
+}
+#endif
 
 #if SAF_TIMER_ENABLED == 1
 _saf_timer_t _saf_timer[SAF_TIMER_SIZE];

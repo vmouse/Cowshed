@@ -1,9 +1,16 @@
 ﻿//Набор функций для обслуживания ЖКИ интерфейс 4-бита 	
-#define F_CPU 8000000UL
-
 #include "lcd.h"            
 #include "bits.h"
 
+// it is a russian alphabet translation
+// except 0401 --> 0xa2 = ╗, 0451 --> 0xb5
+char utf_recode[] = 
+       { 0x41,0xa0,0x42,0xa1,0xe0,0x45,0xa3,0xa4,0xa5,0xa6,0x4b,0xa7,0x4d,0x48,0x4f,
+         0xa8,0x50,0x43,0x54,0xa9,0xaa,0x58,0xe1,0xab,0xac,0xe2,0xad,0xae,0x62,0xaf,0xb0,0xb1,
+         0x61,0xb2,0xb3,0xb4,0xe3,0x65,0xb6,0xb7,0xb8,0xb9,0xba,0xbb,0xbc,0xbd,0x6f,
+         0xbe,0x70,0x63,0xbf,0x79,0xe4,0x78,0xe5,0xc0,0xc1,0xe6,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7
+        };   
+		
 void Set_Interface_Byte(uint8_t data) {
 	for (uint8_t i=0;i<8;i++) {
 		SENDBIT(PortInterface, Idata, data);
@@ -29,42 +36,55 @@ void lcd_com(uint8_t data)
 {
 	lcd_send_niddle(data>>4, 0);
 	lcd_send_niddle(data, 0);
-//	Set_Interface_Byte(0<<LCD_RS | 1<<LCD_EN | hi_h(p));
-//	Set_Interface_Byte(0<<LCD_RS | 0<<LCD_EN | hi_h(p));
-	//Set_Interface_Byte(0<<LCD_RS | 1<<LCD_EN | lo_h(p));
-	//Set_Interface_Byte(0<<LCD_RS | 0<<LCD_EN | lo_h(p));
-	//_delay_us(300);
 }
 
 //-----------Функция записи данных в ЖКИ----------------
 void lcd_dat(uint8_t data)
 {
+/*	uint8_t utf_hi_char;
+  if (data>=0x80) { // UTF-8 handling
+    if (data >= 0xc0) {
+      utf_hi_char = data - 0xd0;
+    } else {
+      data &= 0x3f;
+      if (!utf_hi_char && (data == 1)) 
+        data=0xa2; // ╗
+      else if ((utf_hi_char == 1) && (data == 0x11)) 
+        data=0xb5; // ╦
+      else 
+        data=utf_recode[data + (utf_hi_char<<6) - 0x10];
+    }    
+  }
+*/  
 	lcd_send_niddle(data>>4, 1);
 	lcd_send_niddle(data, 1);
-//	Set_Interface_Byte(1<<LCD_RS | 1<<LCD_EN | hi_h(p));
-//	Set_Interface_Byte(1<<LCD_RS | 0<<LCD_EN | hi_h(p));
-	//Set_Interface_Byte(1<<LCD_RS | 1<<LCD_EN | lo_h(p));
-	//Set_Interface_Byte(1<<LCD_RS | 0<<LCD_EN | lo_h(p));
-	//_delay_us(10);
 }
 
-// вывод строки на экран в позицию y=hi(pos), x=lo(pos)
-void lcd_out(uint8_t pos, char *str)
-{
-//	cli();
+void lcd_pos(uint8_t pos) {
 	if (hi(pos)>0) {
 		pos = (pos & 0x0f) + 0x40;
 	}
 	lcd_com(0x80 + pos);
-	unsigned char i =0;
-	while(str[i])
-	lcd_dat(str[i++]) ;
-//	sei();
+}
+
+// вывод строки на экран в позицию y=hi(pos), x=lo(pos)
+void lcd_out(char *str)
+{
+	uint8_t i=0;
+	while(str[i]) {
+//		if ((uint8_t)str[i]<0xd0) { // unicode skip first byte
+			lcd_dat(str[i]); 
+//		}
+		i++;
+	}
+}
+
+void lcd_clear() {
+	lcd_com(LCD_CLEARDISPLAY); _delay_us(2000);
 }
 
 void lcd_init(void)
 {
-//	cli();
 	_delay_us(50000);		// положено ждать после включения > 40ms
 
 	// инициализация на 4 битную шину
@@ -79,16 +99,20 @@ void lcd_init(void)
 
 	lcd_com(LCD_FUNCTIONSET | LCD_4BITMODE | LCD_2LINE | LCD_5x8DOTS);	
 	lcd_com(LCD_DISPLAYCONTROL | LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF);
-	lcd_com(LCD_CLEARDISPLAY); _delay_us(2000);
+	lcd_clear();
 	lcd_com(LCD_ENTRYMODESET | LCD_ENTRYLEFT | LCD_ENTRYSHIFTDECREMENT);
 
-	//lcd_com(0x20);		// инициализация на 4 битную шину
-	//lcd_com(0x20);
-	//lcd_com(0x28);		// 4 бита, 2 строки
-	//lcd_com(0x06);		// пишем слева направо
-	//lcd_com(0x0c);		// включить, без курсора
-	//lcd_com(0x01);		// очистка экрана
-//	sei();
+// custom zerro char
+	lcd_com(0x40);
+	lcd_dat(0b00000000);
+	lcd_dat(0b00010001);
+	lcd_dat(0b00001110);
+	lcd_dat(0b00010001);
+	lcd_dat(0b00010001);
+	lcd_dat(0b00001110);
+	lcd_dat(0b00010001);
+	lcd_dat(0b00000000);
+	lcd_com(0x80); // set cursor to home
 }
 
 // BCD function from http://homepage.cs.uiowa.edu/~jones/bcd/decimal.html
@@ -129,14 +153,18 @@ char* shift_and_mul_utoa16(uint16_t n, uint8_t *buffer, uint8_t zerro_char)
 	return buffer;
 }
 
-// bits to string function 
-// Need buffer size >=8
-char* bits_to_string(uint8_t n, uint8_t *buffer, uint8_t zerro_char)
+void lcd_bits(uint8_t n, uint8_t zerro_char)
 {
 	for (int i=7; i>=0; i--) {
-		buffer[i] = (n & 0x01) + zerro_char;
+		lcd_dat((n & 0x01) + zerro_char);
 		n = n >> 1;
 	}
-	buffer[8]=0;
-	return buffer;
+}
+
+// displays the hex value of DATA at current LCD cursor position
+void lcd_hex(uint8_t data)
+{
+	char	hex[]="0123456789ABCDEF";
+	lcd_dat(hex[data>>4]);  // display it on LCD
+	lcd_dat(hex[data&0x0f]);
 }

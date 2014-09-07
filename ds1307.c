@@ -2,6 +2,10 @@
 #include "ds1307.h"
 #include "lcd.h"
 
+void DS1307_Init() {
+	I2C_WriteRegister(DS1307,CONTROL_REGISTER, 0x10); // set 1Hz frequence into SQW pin
+}
+
 void DS1307_GetTime(uint8_t *hours, uint8_t *minutes, uint8_t *seconds)
 // returns hours, minutes, and seconds in BCD format
 {
@@ -33,26 +37,30 @@ void SetTimeDate(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t
 	I2C_WriteRegister(DS1307,SECONDS_REGISTER, 0x00);
 }
 
-//  ---------------------------------------------------------------------------//  APPLICATION ROUTINES
+void DS1307_Save8(uint8_t addr, uint8_t data) {
+	addr+=RAM_BEGIN;
+	if (addr<=RAM_END) {
+		I2C_WriteRegister(DS1307, addr,  data);
+	}
+}
 
-void LCD_Hex(uint8_t data)
-// displays the hex value of DATA at current LCD cursor position
-{	
-	char	hex[]="0123456789ABCDEF";
-	lcd_dat(hex[data>>4]);  // display it on LCD
-	lcd_dat(hex[data&0x0f]); 
+void DS1307_Save16(uint8_t addr, uint16_t data) {
+	addr+=RAM_BEGIN;
+	if (addr<RAM_END) {
+		I2C_WriteRegister(DS1307, addr,  data & 0xff);
+		I2C_WriteRegister(DS1307, addr,  data >> 8);
+	}
 }
 
 void ShowDevices(void)
 // Scan I2C addresses and display addresses of all devices found
 {
-	lcd_out(0x00,"Found:");
+	lcd_clear(); lcd_out("Found: ");
 	uint8_t addr = 1;
 	while (addr>0)
 	{
-		lcd_dat(' ');
 		addr = I2C_FindDevice(addr);
-		if (addr>0) LCD_Hex(addr++);
+		if (addr>0) lcd_hex(addr++);
 	}
 }
 
@@ -67,20 +75,18 @@ void LCD_TwoDigits(uint8_t data)
 	lcd_dat(data+'0');
 }
 
-void WriteDate(void)
+void LCD_Date(void)
 {
 	uint8_t months, days, years;
 	DS1307_GetDate(&months,&days,&years);
 	LCD_TwoDigits(days);
 	lcd_dat('.');
 	LCD_TwoDigits(months);
-	lcd_dat('.');
-	lcd_dat('2');
-	lcd_dat('0');
+	lcd_out(".20");
 	LCD_TwoDigits(years);
 }
 
-void WriteTime(void)
+void LCD_Time(void)
 {
 	uint8_t hours, minutes, seconds;
 	DS1307_GetTime(&hours,&minutes,&seconds);
@@ -93,6 +99,7 @@ void WriteTime(void)
 
 void LCD_TimeDate(void)
 {
-	lcd_out(0x03,"");  WriteDate();
-	lcd_out(0x14,"");  WriteTime();
+	lcd_pos(0x03); LCD_Date();
+	lcd_pos(0x14);  LCD_Time();
 }
+

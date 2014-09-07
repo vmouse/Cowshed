@@ -8,7 +8,10 @@
 
 _timers_type _timers_table;
 _timers_type EEMEM flash_timers_table;
-uint16_t _timer_prescaler_cnt = TIMERS_PRESCALER;
+
+uint8_t  _timers_event;
+uint16_t _timers_prescaler;
+uint16_t _timers_prescaler_cnt;
 
 void timer_setup(uint8_t timer_index, uint16_t timer_count) {
 	if (timer_index < TIMERS_MAX ) {
@@ -43,14 +46,15 @@ uint8_t timer_iswork(uint8_t timer_index) {
 	return (_timers_table.timer_state[timer_index] == TIMER_STATE_START)?1:0;
 }
 
-void timers_init(void) {
-	_timers_table.timers_prescaler_cnt=TIMERS_PRESCALER; // предварительный делитель
+void timers_init(uint8_t TickEvent, uint16_t presc) {
+	_timers_prescaler=presc; // предварительный делитель
+	_timers_event=TickEvent;
 }
 
-void timer_onEvent(saf_Event event) {
-	if (event.code == EVENT_SAFTICK) {
-		if (_timer_prescaler_cnt==0) {
-			_timer_prescaler_cnt = TIMERS_PRESCALER;
+void timers_onEvent(saf_Event event) {
+	if (event.code == _timers_event) {
+		if (_timers_prescaler_cnt==0) {
+			_timers_prescaler_cnt = _timers_prescaler;
 
 			union { struct  
 			{
@@ -90,7 +94,7 @@ void timer_onEvent(saf_Event event) {
 				saf_eventBusSend(newEvent);
 			}
 			
-		} else _timer_prescaler_cnt--;
+		} else _timers_prescaler_cnt--;
 
 	}
 }
