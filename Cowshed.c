@@ -4,6 +4,7 @@
  * Created: 22.04.2014 20:37:33
  *  Author: vlad 
  */ 
+#define MAIN_FILE
 #include <avr/io.h>
 #include <string.h>
 #include <stdint.h>
@@ -37,6 +38,7 @@
 
 
 void Set_Control_Byte(uint8_t data) {
+	data=~data; // в этой версии включаем нулями, поэтому инвертируем
 	for (uint8_t i=0;i<8;i++) {
 		SENDBIT(PortControl, PCdata, data);
 		STROBE(PortControl, PCshift);   // Shift
@@ -47,8 +49,7 @@ void Set_Control_Byte(uint8_t data) {
 
 
 uint8_t portdata = 0;			// что выводим в порты
-uint8_t ind_digit = 0;			// номер выводимого знака в динамической индикации
-uint8_t ind_data[] = {~2,~2,~2,~2};  // что отображать
+
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
 uint8_t EEMEM flash_cmd_index = 0;	// сюда запоминаем последний индекс команды записи в порт
 uint8_t EEMEM flash_portdata = 0;	// запоминаем что вывели порт
@@ -86,7 +87,7 @@ void SaveFlash(void);
 void ResetState(void);
 
 // Фиксированные периоды для таймеров
-uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, /*5*60*/10, 5*60};
+uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
 // 0 - сюда будем замерять время
 // 1 - 30 сек, перекачка моющего раствора 1
 // 2 - 30 сек, перекачка моющего раствора 2
@@ -105,7 +106,6 @@ const _cmd_type CmdArray[] = {
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
    {'W', 0x81}, // 02: Ждем наполнения или ошибки окончания таймера
-/*
    {'P', 0x70}, // 03: начать полоскание достаточно теплой водой
    {'T', 0x03}, // 04: Взводим таймер на t3 = 5 мин
    {'W', 0x00}, // 05: Ждем таймер
@@ -165,7 +165,7 @@ const _cmd_type CmdArray[] = {
    {'T', 0x07}, // 3B: Взводим таймер на t7 = 2 мин
    {'W', 0x00}, // 3C: Ждем еще 2 минуты
    {'P', 0x00}, // 3D: Все отключаем и оставляем слив
-*/
+
 };  // test port output
 
 
@@ -182,7 +182,7 @@ void Dynamic_Indication(void) {
 // Show command by index
 void ShowCmd(uint16_t cmd_index) {
 	_cmd_type Cmd = CmdArray[cmd_index];
-	char buf[6];
+	uint8_t buf[6];
 	shift_and_mul_utoa16(cmd_index+1, buf, 0x30); // bcd convertion
 	lcd_pos(0x10);
 	lcd_out(buf+2); lcd_out(": "); 
@@ -195,11 +195,16 @@ void ShowTime(uint16_t data) {
 	uint8_t secs = data % 60;
 
 	lcd_pos(0x1b);
-	char buf[6];
+	uint8_t buf[6];
 	shift_and_mul_utoa16(mins, buf, 0x30); 
 	lcd_out(buf+3);lcd_dat(':');
 	shift_and_mul_utoa16(secs, buf, 0x30); 
 	lcd_out(buf+3);
+}
+
+void ShowSensors(void)
+{
+	lcd_pos(0x1E); lcd_hex(CurSensors);
 }
 
 void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
@@ -207,7 +212,7 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 	state.bits.error=1;
 	state.bits.started = 0;
 
-	char buf[6];
+	uint8_t buf[6];
 	shift_and_mul_utoa16(ErrorCode+1, buf, 0x30); // bcd convertion
 
 	lcd_clear();
@@ -328,17 +333,11 @@ void onEvent(saf_Event event)
 				break;
 			default: break;
 		}
-	}
+	} else
 
-	if (event.code == EVENT_IN_DOWN)
+	if (event.code == EVENT_SENSORS)
 	{
 		switch (event.value) {
-			case 0: // start button
-				if (state.bits.started == 0) {
-					cmd_index = 0;
-					state.value = 1; // все флаги сбрасываем, кроме старта
-				}
-				break;
 			case 1: // high level sensor
 				if ((wait_mask.bits.sensor_high !=0) && (state.bits.waiting == 1)) { 
 					state.bits.waiting = 0; 
@@ -354,7 +353,8 @@ void onEvent(saf_Event event)
 			default:
 				break;	
 		}
-	} else if (event.code == EVENT_TIMER_TICK) // отображаем прогресс таймера 0
+	} else 
+	if (event.code == EVENT_TIMER_TICK) // отображаем прогресс таймера 0
 	{	
 		if (timer_iswork(0)==1) {
 			ShowTime(timer_get(0));
@@ -379,8 +379,8 @@ void ResetState(void) {
 	wait_mask.value = 0;
 	cmd_index = 0;
 	timer_stop(-1);
-	lcd_clear(); lcd_out(" Covshed  ver.2");
 	Set_Control_Byte(0);
+	lcd_init();	lcd_clear(); lcd_out(" Covshed  ver.2");
 }
 
 void SaveFlash(void) {
@@ -423,6 +423,8 @@ int main(void)
 	PORTC = 0xff;
 	PORTB = 0xff;
 	PORTD = 0xff;
+
+	Set_Control_Byte(0);
 
 	lcd_init();
 	DS1307_Init();
@@ -467,10 +469,11 @@ int main(void)
 		saf_process();
 		
 		if (state.bits.end || state.value==0) {
-			lcd_pos(0x14); LCD_Time(); 
+			lcd_pos(0x14); LCD_Time(); ShowSensors();
 		} else if (state.bits.waiting == 0 && state.bits.started == 1) {
 			Do_Command();
 		}
+
     }
 }
 

@@ -28,4 +28,9 @@
 #define EVENT_KEY_DOWN		24
 #define EVENT_KEY_UP		25
 #define EVENT_INT0			26
+#define EVENT_INT1			27
+#define EVENT_SENSOR_LO		28
+#define EVENT_SENSOR_HI		29
+#define EVENT_SENSORS		28
+
 

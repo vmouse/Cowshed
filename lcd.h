@@ -7,10 +7,13 @@
 #include <avr/interrupt.h>
 
 #define PortInterface PORTC
+#define PortKeyboard PINC
+#define PortSensors	 PIND
 #define Ishift		PC1 // Register strobe (shift clock)
 #define Idata		PC3 // Register data
 #define Ilatch		PC0 // Register out (latch clock)
 #define Keyboard	PC2	// Keyboard multiplexor
+#define Sensors		PD3 // Sensors multiplexor
 #define LCD_RS		2	// bit LCD RS
 #define LCD_EN		3   // bit LCD EN
 
