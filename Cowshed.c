@@ -45,6 +45,7 @@ void Set_Control_Byte(uint8_t data) {
 		data = data << 1;
 	}
 	STROBE(PortControl, PClatch);  // Out enable
+	DELAY;
 }
 
 
@@ -87,7 +88,7 @@ void SaveFlash(void);
 void ResetState(void);
 
 // Фиксированные периоды для таймеров
-uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
+uint16_t TimersArray[] = {1/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
 // 0 - сюда будем замерять время
 // 1 - 30 сек, перекачка моющего раствора 1
 // 2 - 30 сек, перекачка моющего раствора 2
@@ -103,6 +104,31 @@ uint16_t TimersArray[] = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60
 const _cmd_type CmdArray[] = {
 //   {'T', 0x02}, // 0: Взводим таймер на t4 = 15 мин
 //   {'W', 0x02}, // 1: Кончилась вода|Закончилась мойка
+   {'P', 0x02},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x04},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x08},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x10},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x20},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x40},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x80},
+   {'T', 0x00},
+   {'W', 0x00},
+   {'P', 0x01},
+   {'T', 0x00},
+   {'W', 0x00},
+/*
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
    {'W', 0x81}, // 02: Ждем наполнения или ошибки окончания таймера
@@ -165,7 +191,7 @@ const _cmd_type CmdArray[] = {
    {'T', 0x07}, // 3B: Взводим таймер на t7 = 2 мин
    {'W', 0x00}, // 3C: Ждем еще 2 минуты
    {'P', 0x00}, // 3D: Все отключаем и оставляем слив
-
+*/
 };  // test port output
 
 
@@ -325,7 +351,7 @@ void onEvent(saf_Event event)
 				if (state.bits.started == 0) {
 					cmd_index = 0;
 					state.value = 1; // все флаги сбрасываем, кроме старта
-					lcd_clear();
+					lcd_clear(); 
 				}
 				break;
 			case '*': // reset
@@ -380,7 +406,9 @@ void ResetState(void) {
 	cmd_index = 0;
 	timer_stop(-1);
 	Set_Control_Byte(0);
+	Set_Control_Byte(0);
 	lcd_init();	lcd_clear(); lcd_out(" Covshed  ver.2");
+//	Set_Control_Byte(0);
 }
 
 void SaveFlash(void) {
@@ -424,14 +452,16 @@ int main(void)
 	PORTB = 0xff;
 	PORTD = 0xff;
 
-	Set_Control_Byte(0);
+//while (1) {
+	//Set_Control_Byte(2);
+//}
+	// State machine initialization
+	ResetState();
 
-	lcd_init();
+//	lcd_init(); // lcd initialized in reset
 	DS1307_Init();
 //	SetTimeDate(0x14, 0x09, 0x06, 0x02, 0x37); // Set time into 1307 chip
 
-	// State machine initialization
-	ResetState();
 
 	// Simple AVR framework (SAF) initializationwaa
 	saf_init();
@@ -448,6 +478,7 @@ int main(void)
 	saf_addEventHandler(onEvent);
 	saf_addEventHandler(KeyMatrix_onEvent);
 	saf_addEventHandler(timers_onEvent);
+
 
 
 	// Start
@@ -467,7 +498,6 @@ int main(void)
     {
 //		LCD_TimeDate();
 		saf_process();
-		
 		if (state.bits.end || state.value==0) {
 			lcd_pos(0x14); LCD_Time(); ShowSensors();
 		} else if (state.bits.waiting == 0 && state.bits.started == 1) {
