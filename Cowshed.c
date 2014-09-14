@@ -19,13 +19,6 @@
 #include "ds1307.h"
 #include "keymatrix.h"
 
-#define STATE_INIT	0	// начальное состояние. ждем команд
-#define STATE_WORK	1	// состояние выполнение процесса
-#define STATE_PAUSE	2	// пауза процесса. выход "ручным" способом
-#define STATE_ERROR	3	// ошибка в процессе. остановка в этом месте 
-#define STATE_WAIT	4	// процесс в ожидании или таймера или события порта (использует маску ожидания wait_mask)
-#define STATE_END	5	// программа завершена
-
 #define CoolStart	(MCUSR & ( 1 << PORF )) // не ноль, если запуск был включением питания
 
 #define PortControl	PORTB
@@ -52,6 +45,12 @@ void Set_Control_Byte(uint8_t data) {
 uint8_t portdata = 0;			// что выводим в порты
 
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
+
+uint8_t InputSize = 1;			// Ожидаемая длина ввода
+uint8_t InputPos  = 0;			// текущая позиция ввода
+#define MAX_INPUT_BUF 16
+uint8_t InputData[MAX_INPUT_BUF];	// буфер ввода
+
 uint8_t EEMEM flash_cmd_index = 0;	// сюда запоминаем последний индекс команды записи в порт
 uint8_t EEMEM flash_portdata = 0;	// запоминаем что вывели порт
 uint8_t EEMEM flash_state = 0;		// запоминаем состояние
@@ -63,6 +62,7 @@ union { struct
 		uint8_t waiting	: 1;
 		uint8_t end		: 1;
 		uint8_t error	: 1;
+		uint8_t config  : 1;   // конфигурирование, работа с меню (подавляет вывод другой информации)
 	} bits;
 	uint8_t value;
 } state = {.value = 0x00 }; // состояние системы
@@ -102,8 +102,7 @@ uint16_t TimersArray[] = {1/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60,
 
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
 const _cmd_type CmdArray[] = {
-//   {'T', 0x02}, // 0: Взводим таймер на t4 = 15 мин
-//   {'W', 0x02}, // 1: Кончилась вода|Закончилась мойка
+// test prog
    {'P', 0x02},
    {'T', 0x00},
    {'W', 0x00},
@@ -342,6 +341,29 @@ void Do_Command(void) {			// выполнение комманды програ�
 	}
 }
 
+void StartTimeInput(void) {
+	state.bits.config = 1;
+	lcd_clear();
+	lcd_cursor_on;
+	lcd_out("Set time");
+	lcd_pos(0x10);
+	InputPos = 0;
+	InputSize = 10;
+}
+
+void ProcessInput(uint8_t key) {
+	lcd_dat(key);
+	InputPos++;
+	if (InputPos>=InputSize || InputPos>MAX_INPUT_BUF) {
+		InputPos=0;
+		lcd_pos(0x10);
+	} else {
+		if ((InputPos == 2) || (InputPos == 4)) { lcd_dat('.'); } 
+		if ((InputPos == 6)) { lcd_dat(' '); }
+		if ((InputPos == 8) || (InputPos == 10)) { lcd_dat(':'); }
+	}
+}
+
 void onEvent(saf_Event event)
 {
 	if (event.code == EVENT_KEY_DOWN)
@@ -354,10 +376,15 @@ void onEvent(saf_Event event)
 					lcd_clear(); 
 				}
 				break;
+			case 'C': // config button 
+				StartTimeInput();
+				break; 
 			case '*': // reset
 				ResetState();
 				break;
-			default: break;
+			default:
+				ProcessInput(event.value);
+				break;
 		}
 	} else
 
@@ -465,21 +492,10 @@ int main(void)
 
 	// Simple AVR framework (SAF) initializationwaa
 	saf_init();
-//	timers_init();
-	timers_init(EVENT_INT0, 0);
-
-//	input_add(_D, 7); // Start button
-//	input_add(_D, 2); // Liquid high level sensor
-//	input_add(_D, 3); // Liquid Low level sensor
-	
-//	saf_addEventHandler(onEvent);
-//	saf_addEventHandler(input_onEvent);
-
 	saf_addEventHandler(onEvent);
 	saf_addEventHandler(KeyMatrix_onEvent);
 	saf_addEventHandler(timers_onEvent);
-
-
+	timers_init(EVENT_INT0, 0);
 
 	// Start
 	sei();

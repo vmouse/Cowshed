@@ -70,6 +70,8 @@ void lcd_out(char *str);
 void lcd_hex(uint8_t data);
 void lcd_bits(uint8_t n, uint8_t zerro_char);
 
+#define lcd_cursor_on lcd_com(LCD_DISPLAYCONTROL | LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKON)
+
 char* shift_and_mul_utoa16(uint16_t n, uint8_t *buffer, uint8_t zerro_char);
 
 #endif
