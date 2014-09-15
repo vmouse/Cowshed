@@ -49,3 +49,26 @@ void KeyMatrix_onEvent(saf_Event event) {
 		}
 	}
 }
+
+void StartInput(char *Mask, uint8_t Min, uint8_t Max) {
+	state.bits.config = 1;
+	lcd_clear();
+	lcd_cursor_on;
+	lcd_out("Set time");
+	lcd_pos(0x10);
+	InputPos = 0;
+	InputSize = 10;
+}
+
+void ProcessInput(uint8_t key) {
+	lcd_dat(key);
+	InputPos++;
+	if (InputPos>=InputSize || InputPos>MAX_INPUT_BUF) {
+		InputPos=0;
+		lcd_pos(0x10);
+		} else {
+		if ((InputPos == 2) || (InputPos == 4)) { lcd_dat('.'); }
+		if ((InputPos == 6)) { lcd_dat(' '); }
+		if ((InputPos == 8) || (InputPos == 10)) { lcd_dat(':'); }
+	}
+}

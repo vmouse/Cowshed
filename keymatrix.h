@@ -16,5 +16,6 @@ extern  uint8_t CurSensors;
 
 void Interface_Read(void);
 void KeyMatrix_onEvent(saf_Event event);
+void StartInput(char *Mask, uint8_t Min, uint8_t Max);
 
 #endif

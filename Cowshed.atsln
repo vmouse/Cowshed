@@ -1,0 +1,20 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Atmel Studio Solution File, Format Version 11.00
+Project("{54F91283-7BC4-4236-8FF9-10F437C3AD48}") = "Cowshed", "Cowshed.cproj", "{9CED3B63-9AF0-41DC-882A-BF2100E66228}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|AVR = Debug|AVR
+		Release|AVR = Release|AVR
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{9CED3B63-9AF0-41DC-882A-BF2100E66228}.Debug|AVR.ActiveCfg = Debug|AVR
+		{9CED3B63-9AF0-41DC-882A-BF2100E66228}.Debug|AVR.Build.0 = Debug|AVR
+		{9CED3B63-9AF0-41DC-882A-BF2100E66228}.Release|AVR.ActiveCfg = Release|AVR
+		{9CED3B63-9AF0-41DC-882A-BF2100E66228}.Release|AVR.Build.0 = Release|AVR
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

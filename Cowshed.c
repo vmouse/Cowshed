@@ -242,8 +242,6 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 
 	lcd_clear();
 	lcd_pos(0x04);	lcd_out((uint8_t[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
-//	lcd_pos(0x10);	lcd_out((uint8_t[]){99,191,112,58,0}); lcd_out(buf+2); // "стр:"+ErrorCode
-//	lcd_out((uint8_t[]){32,191,184,190,58,0}); //" тип: "
 	ShowCmd(ErrorCode);
 	lcd_dat(' ');
 	switch (ErrorClass) {
@@ -338,29 +336,6 @@ void Do_Command(void) {			// выполнение комманды програ�
 	}
 	cmd_index++;
 //	SaveFlash();
-	}
-}
-
-void StartTimeInput(void) {
-	state.bits.config = 1;
-	lcd_clear();
-	lcd_cursor_on;
-	lcd_out("Set time");
-	lcd_pos(0x10);
-	InputPos = 0;
-	InputSize = 10;
-}
-
-void ProcessInput(uint8_t key) {
-	lcd_dat(key);
-	InputPos++;
-	if (InputPos>=InputSize || InputPos>MAX_INPUT_BUF) {
-		InputPos=0;
-		lcd_pos(0x10);
-	} else {
-		if ((InputPos == 2) || (InputPos == 4)) { lcd_dat('.'); } 
-		if ((InputPos == 6)) { lcd_dat(' '); }
-		if ((InputPos == 8) || (InputPos == 10)) { lcd_dat(':'); }
 	}
 }
 
