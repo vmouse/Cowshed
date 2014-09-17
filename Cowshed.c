@@ -48,8 +48,6 @@ uint8_t cmd_index = 0;			// индекс текущей команды в про
 
 uint8_t InputSize = 1;			// Ожидаемая длина ввода
 uint8_t InputPos  = 0;			// текущая позиция ввода
-#define MAX_INPUT_BUF 16
-uint8_t InputData[MAX_INPUT_BUF];	// буфер ввода
 
 uint8_t EEMEM flash_cmd_index = 0;	// сюда запоминаем последний индекс команды записи в порт
 uint8_t EEMEM flash_portdata = 0;	// запоминаем что вывели порт
@@ -63,6 +61,7 @@ union { struct
 		uint8_t end		: 1;
 		uint8_t error	: 1;
 		uint8_t config  : 1;   // конфигурирование, работа с меню (подавляет вывод другой информации)
+		uint8_t userinput: 1;  // идет пользовательский ввод с клавиатуры
 	} bits;
 	uint8_t value;
 } state = {.value = 0x00 }; // состояние системы
@@ -348,11 +347,14 @@ void onEvent(saf_Event event)
 				if (state.bits.started == 0) {
 					cmd_index = 0;
 					state.value = 1; // все флаги сбрасываем, кроме старта
-					lcd_clear(); 
+					lcd_clear();
 				}
 				break;
-			case 'C': // config button 
-				StartTimeInput();
+			case 'C': // config button
+				state.bits.config = 1;
+				state.bits.userinput = 1;
+ 
+				StartInput("##.##.#### ##:##", 0x10);
 				break; 
 			case '*': // reset
 				ResetState();

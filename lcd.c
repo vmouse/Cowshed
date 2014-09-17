@@ -41,21 +41,6 @@ void lcd_com(uint8_t data)
 //-----------Функция записи данных в ЖКИ----------------
 void lcd_dat(uint8_t data)
 {
-/*	uint8_t utf_hi_char;
-  if (data>=0x80) { // UTF-8 handling
-    if (data >= 0xc0) {
-      utf_hi_char = data - 0xd0;
-    } else {
-      data &= 0x3f;
-      if (!utf_hi_char && (data == 1)) 
-        data=0xa2; // ╗
-      else if ((utf_hi_char == 1) && (data == 0x11)) 
-        data=0xb5; // ╦
-      else 
-        data=utf_recode[data + (utf_hi_char<<6) - 0x10];
-    }    
-  }
-*/  
 	lcd_send_niddle(data>>4, 1);
 	lcd_send_niddle(data, 1);
 }

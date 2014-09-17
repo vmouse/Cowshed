@@ -2,6 +2,8 @@
 
 uint8_t CurMatrixKey=0;
 uint8_t KeyDelay=0;
+char	InputMask[];
+uint8_t InputPos=0;
 
 // read sensors and keyboard
 void Interface_Read() {
@@ -50,25 +52,22 @@ void KeyMatrix_onEvent(saf_Event event) {
 	}
 }
 
-void StartInput(char *Mask, uint8_t Min, uint8_t Max) {
-	state.bits.config = 1;
-	lcd_clear();
+void StartInput(char *Mask, uint8_t Pos) {
 	lcd_cursor_on;
-	lcd_out("Set time");
-	lcd_pos(0x10);
+	lcd_pos(Pos);
 	InputPos = 0;
-	InputSize = 10;
+	InputMask = Mask;
+}
+
+void StopInput(void) {
+	lcd_cursor_off;
 }
 
 void ProcessInput(uint8_t key) {
 	lcd_dat(key);
-	InputPos++;
-	if (InputPos>=InputSize || InputPos>MAX_INPUT_BUF) {
-		InputPos=0;
-		lcd_pos(0x10);
-		} else {
-		if ((InputPos == 2) || (InputPos == 4)) { lcd_dat('.'); }
-		if ((InputPos == 6)) { lcd_dat(' '); }
-		if ((InputPos == 8) || (InputPos == 10)) { lcd_dat(':'); }
+	uint8_t maskchar = InputMask[InputPos];
+	if (maskchar != 0 && InputPos < MAX_INPUT_BUF) {
+			if (maskchar != '#') { lcd_dat( maskchar); }
+			InputPos++;
 	}
 }
