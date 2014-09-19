@@ -18,6 +18,7 @@
 #include "i2c.h"
 #include "ds1307.h"
 #include "keymatrix.h"
+#include "Menu.h"
 
 #define CoolStart	(MCUSR & ( 1 << PORF )) // не ноль, если запуск был включением питания
 
@@ -355,10 +356,7 @@ void onEvent(saf_Event event)
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
-				state.bits.userinput = 1;
-				lcd_clear(); lcd_pos(0x04); lcd_out("Set time:");
-				char buf[]="##:##:##";
-				StartInput('T', "##:##:##", 0x14, DS1307_GetTimeStr(buf));
+				StartMenu();
 				break; 
 			case '*': // reset
 				ResetState();
@@ -383,9 +381,32 @@ void onEvent(saf_Event event)
 			case 'D':
 				SetDate(Hex2Int(&InputBuffer[8]), Hex2Int(&InputBuffer[3]), Hex2Int(&InputBuffer[0]));
 				break;
+			case 'W':
+				// set timer value
+			break;
 			default: break;
 		}
-		lcd_pos(0); lcd_dat(event.value); lcd_out(InputBuffer);
+		// return to menu
+		ProcessMenu(0);
+	} else
+
+	if (event.code == EVENT_MENU_EXECUTE) {
+		char buf[sizeof("##.##.####")];
+		switch (event.value) {
+			case 7:
+				state.bits.userinput = 1;
+				lcd_clear(); lcd_pos(0x04); lcd_out("Set date:");
+				StartInput('D', "##.##.####", 0x12, DS1307_GetTimeStr(buf));
+			case 8:
+				state.bits.userinput = 1;
+				lcd_clear(); lcd_pos(0x04); lcd_out("Set time:");
+				StartInput('T', "##:##:##", 0x14, DS1307_GetTimeStr(buf));
+			default:
+				break;
+		}	
+	} else
+	if (event.code == EVENT_MENU_EXIT) {
+		state.bits.config = 0;
 	} else
 
 	if (event.code == EVENT_SENSORS)
@@ -471,6 +492,9 @@ void onEvent_test(saf_Event event)
 int main(void)
 {
 
+	StartMenu();
+	ProcessMenu('C');
+	ProcessMenu('*');
 //	StartInput("D", "##.##.20##", 0x10, DS1307_GetDateStr(buf));
 
 /*
