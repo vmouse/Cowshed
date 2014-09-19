@@ -1,9 +1,12 @@
 #include "keymatrix.h"
+#include <string.h>
 
 uint8_t CurMatrixKey=0;
 uint8_t KeyDelay=0;
-char	InputMask[];
+char	InputMask[MAX_INPUT_BUF];
 uint8_t InputPos=0;
+uint8_t MaskPos=0;
+uint8_t	InputEventValue=0;
 
 // read sensors and keyboard
 void Interface_Read() {
@@ -52,22 +55,67 @@ void KeyMatrix_onEvent(saf_Event event) {
 	}
 }
 
-void StartInput(char *Mask, uint8_t Pos) {
-	lcd_cursor_on;
-	lcd_pos(Pos);
-	InputPos = 0;
-	InputMask = Mask;
-}
-
-void StopInput(void) {
+void StopInput(uint8_t EventCode) {
 	lcd_cursor_off;
+	saf_Event newEvent;
+	newEvent.value = InputEventValue;
+	newEvent.code = EventCode;
+	saf_eventBusSend(newEvent);
 }
 
-void ProcessInput(uint8_t key) {
-	lcd_dat(key);
-	uint8_t maskchar = InputMask[InputPos];
-	if (maskchar != 0 && InputPos < MAX_INPUT_BUF) {
-			if (maskchar != '#') { lcd_dat( maskchar); }
-			InputPos++;
+// работа с маской ввода, возвращает 0, если маска закончилась
+uint8_t ParseInputMask(void) {
+	// обработка маски
+	while ((InputMask[MaskPos] != '#') && (MaskPos < MAX_INPUT_BUF) && (InputMask[MaskPos] != 0 )) {
+		lcd_dat(InputMask[MaskPos]);
+		InputBuffer[InputPos] = InputMask[MaskPos];
+		InputPos++;
+		MaskPos++; 
+	} 	
+	if ((MaskPos >= MAX_INPUT_BUF) || (InputMask[MaskPos] == 0 )) {
+		return 1;
 	}
+	return 0;
+}
+
+void StartInput(uint8_t EventValue, char *Mask, uint8_t Pos, char *DefValue) {
+	InputPos = 0;
+	MaskPos = 0;
+	InputEventValue = EventValue;
+	strncpy(InputMask, Mask, sizeof(InputMask));
+	strncpy(InputBuffer, DefValue, sizeof(InputBuffer));
+
+	lcd_pos(Pos);
+	lcd_out(InputBuffer);
+	lcd_pos(Pos);
+	lcd_cursor_on;
+
+	ParseInputMask(); // в начале маски ввода могут быть символы для вывода
+}
+
+// обработка очередного символа
+void ProcessInput(uint8_t key) {
+	if (key == '*') {
+		StopInput(EVENT_INPUT_CANCELED);
+		return;
+	} else
+	if (key == '#') {
+		key = 0;
+	} else {
+		lcd_dat(key);
+		InputBuffer[InputPos] = key;
+		InputPos++; MaskPos++;
+	}
+	if ((ParseInputMask() != 0) || (InputPos >= MAX_INPUT_BUF) || (key == 0)) {
+		StopInput(EVENT_INPUT_COMPLETED);
+	}
+}
+
+uint8_t Hex2Int(char str[]) {
+	uint8_t num1 = str[0]-'0';
+	if (num1 > 9) { num1 -= 7; }
+	num1 = num1 << 4;
+	uint8_t num2 = str[1]-'0';
+	if (num2 > 9) { num2 -= 7; }
+	return num1 + num2;
 }

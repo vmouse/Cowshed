@@ -88,3 +88,14 @@ uint8_t I2C_ReadRegister(uint8_t busAddr, uint8_t deviceRegister)
 	I2C_Stop();  // stop
 	return data;
 }
+
+char* I2C_ReadRegisterAsHEX(char *buffer, uint8_t busAddr, uint8_t deviceRegister)
+{
+	uint8_t data = 0x12;
+	data = I2C_ReadRegister(busAddr, deviceRegister);
+	char *ptr = buffer;
+	*ptr++ = ( (data >> 4) + '0' );
+	*ptr++ = ( (data & 0x0f) + '0' );
+	*ptr = 0;
+	return ptr;
+}

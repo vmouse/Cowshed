@@ -19,16 +19,16 @@
 #define TW_STATUS  (TWSR & 0xF8)  // returns value of status register
 #define I2C_Stop()  TWCR = TW_STOP  // inline macro for stop condition
 
-void I2C_Init(void);
+void	I2C_Init(void);
 uint8_t I2C_Detect(uint8_t addr);
 uint8_t I2C_FindDevice(uint8_t start);
-void I2C_Start(uint8_t slaveAddr);
+void	I2C_Start(uint8_t slaveAddr);
 uint8_t I2C_Write(uint8_t data);  // sends a data uint8_t to slave
 uint8_t I2C_ReadACK(void);  // reads a data uint8_t from slave
 uint8_t I2C_ReadNACK(void);  // reads a data uint8_t from slave
-void I2C_WriteByte(uint8_t busAddr, uint8_t data);
-void I2C_WriteRegister(uint8_t busAddr, uint8_t deviceRegister, uint8_t data);
+void	I2C_WriteByte(uint8_t busAddr, uint8_t data);
+void	I2C_WriteRegister(uint8_t busAddr, uint8_t deviceRegister, uint8_t data);
 uint8_t I2C_ReadRegister(uint8_t busAddr, uint8_t deviceRegister);
-
+char*	I2C_ReadRegisterAsHEX(char *buffer, uint8_t busAddr, uint8_t deviceRegister);
 
 #endif /* I2C_H_ */

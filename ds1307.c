@@ -25,17 +25,35 @@ void DS1307_GetDate(uint8_t *months, uint8_t *days, uint8_t *years)
 	*years = I2C_ReadRegister(DS1307,YEARS_REGISTER);
 }
 
-// data in BCD format 0x14, 0x9, 0x5, 0x11, 0x37 => 2014-09-05 11:37
-void SetTimeDate(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min)
+// data in BCD format 0x14, 0x9, 0x5 => 2014-09-05 
+void SetDate(uint8_t year, uint8_t month, uint8_t day)
 // simple, hard-coded way to set the date.
 {
 	I2C_WriteRegister(DS1307,MONTHS_REGISTER,  month);
 	I2C_WriteRegister(DS1307,DAYS_REGISTER,  day);
 	I2C_WriteRegister(DS1307,YEARS_REGISTER,  year);
+}
+
+
+// time in BCD format 0x11, 0x37 => 11:37
+void SetTime(uint8_t hour, uint8_t min, uint8_t sec)
+// simple, hard-coded way to set the date.
+{
 	I2C_WriteRegister(DS1307,HOURS_REGISTER, hour);		// 0x08+0x40);  // add 0x40 for PM
 	I2C_WriteRegister(DS1307,MINUTES_REGISTER, min);
-	I2C_WriteRegister(DS1307,SECONDS_REGISTER, 0x00);
+	I2C_WriteRegister(DS1307,SECONDS_REGISTER, sec);
 }
+
+
+// data in BCD format 0x14, 0x9, 0x5, 0x11, 0x37 => 2014-09-05 11:37
+void SetTimeDate(uint8_t year, uint8_t month, uint8_t day, uint8_t hour, uint8_t min)
+// simple, hard-coded way to set the date.
+{
+	SetDate(year, month, day);
+	SetTime(hour, min, 0);
+}
+
+
 
 void DS1307_Save8(uint8_t addr, uint8_t data) {
 	addr+=RAM_BEGIN;
@@ -62,6 +80,30 @@ void ShowDevices(void)
 		addr = I2C_FindDevice(addr);
 		if (addr>0) lcd_hex(addr++);
 	}
+}
+
+// buffer - pointer into 10 char array = ##.##.####
+char* DS1307_GetDateStr(char buffer[]) {
+	char *ptr = buffer;
+	ptr = I2C_ReadRegisterAsHEX(ptr, DS1307,DAYS_REGISTER);
+	*ptr++ ='.';
+	ptr = I2C_ReadRegisterAsHEX(ptr, DS1307,MONTHS_REGISTER);
+	*ptr++ = '.';
+	*ptr++ = '2';
+	*ptr++ = '0';
+	ptr = I2C_ReadRegisterAsHEX(ptr, DS1307,YEARS_REGISTER);
+	return buffer;
+}
+
+// buffer - pointer into 10 char array = ##.##.####
+char* DS1307_GetTimeStr(char buffer[]) {
+	char *ptr = buffer;
+	ptr = I2C_ReadRegisterAsHEX(ptr, DS1307,HOURS_REGISTER);
+	*ptr++ =':';
+	ptr = I2C_ReadRegisterAsHEX(ptr, DS1307,MINUTES_REGISTER);
+	*ptr++ = ':';
+	ptr = I2C_ReadRegisterAsHEX(ptr, DS1307,SECONDS_REGISTER);
+	return buffer;
 }
 
 void LCD_TwoDigits(uint8_t data)

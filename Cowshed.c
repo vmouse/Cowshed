@@ -28,7 +28,9 @@
 
 #define Sensor		PD3 // Sensor multiplexor
 
-
+# define PSTR(s) (__extension__( {static char __c[] PROGMEM = (s); &__c[0];}))
+//Эта фича позволяет писать внутри функций так:
+//char * mystr = PSTR( ":)" );
 
 void Set_Control_Byte(uint8_t data) {
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
@@ -46,8 +48,6 @@ uint8_t portdata = 0;			// что выводим в порты
 
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
 
-uint8_t InputSize = 1;			// Ожидаемая длина ввода
-uint8_t InputPos  = 0;			// текущая позиция ввода
 
 uint8_t EEMEM flash_cmd_index = 0;	// сюда запоминаем последний индекс команды записи в порт
 uint8_t EEMEM flash_portdata = 0;	// запоминаем что вывели порт
@@ -342,7 +342,10 @@ void onEvent(saf_Event event)
 {
 	if (event.code == EVENT_KEY_DOWN)
 	{
-		switch (event.value) {
+		if (state.bits.userinput == 1) {
+			ProcessInput(event.value);
+		} else	
+			switch (event.value) {
 			case 'A': // start button
 				if (state.bits.started == 0) {
 					cmd_index = 0;
@@ -353,16 +356,36 @@ void onEvent(saf_Event event)
 			case 'C': // config button
 				state.bits.config = 1;
 				state.bits.userinput = 1;
- 
-				StartInput("##.##.#### ##:##", 0x10);
+				lcd_clear(); lcd_pos(0x04); lcd_out("Set time:");
+				char buf[]="##:##:##";
+				StartInput('T', "##:##:##", 0x14, DS1307_GetTimeStr(buf));
 				break; 
 			case '*': // reset
 				ResetState();
 				break;
 			default:
-				ProcessInput(event.value);
 				break;
 		}
+	} else
+	
+	if (event.code == EVENT_INPUT_CANCELED)
+	{
+		state.bits.userinput = 0;
+		ResetState();
+	} else
+	if (event.code == EVENT_INPUT_COMPLETED)
+	{
+		state.bits.userinput = 0;
+		switch (event.value) {
+			case 'T': 
+				SetTime(Hex2Int(&InputBuffer[0]), Hex2Int(&InputBuffer[3]), Hex2Int(&InputBuffer[6]));
+				break;
+			case 'D':
+				SetDate(Hex2Int(&InputBuffer[8]), Hex2Int(&InputBuffer[3]), Hex2Int(&InputBuffer[0]));
+				break;
+			default: break;
+		}
+		lcd_pos(0); lcd_dat(event.value); lcd_out(InputBuffer);
 	} else
 
 	if (event.code == EVENT_SENSORS)
@@ -448,6 +471,23 @@ void onEvent_test(saf_Event event)
 int main(void)
 {
 
+//	StartInput("D", "##.##.20##", 0x10, DS1307_GetDateStr(buf));
+
+/*
+StartInput("##:##", 0x10);	
+ProcessInput(0x31);
+ProcessInput(0x32);
+ProcessInput(0x33);
+ProcessInput(0x34);
+ProcessInput(0x35);
+ProcessInput(0x36);
+ProcessInput(0x37);
+ProcessInput(0x38);
+ProcessInput(0x39);
+ProcessInput(0x30);
+ProcessInput(0x31);
+ProcessInput(0x32);
+*/	
 	// Hardware initialization
 	DDRD = 0x0;
 	DDRC = 1<<Ishift|1<<Idata|1<<Ilatch;
