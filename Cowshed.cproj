@@ -209,6 +209,9 @@
     <Compile Include="Menu.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Menu.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="saf2core.c">
       <SubType>compile</SubType>
     </Compile>

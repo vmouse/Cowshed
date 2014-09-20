@@ -56,7 +56,7 @@ void KeyMatrix_onEvent(saf_Event event) {
 }
 
 void StopInput(uint8_t EventCode) {
-	lcd_cursor_off;
+	lcd_cursor_off; lcd_clear();
 	saf_Event newEvent;
 	newEvent.value = InputEventValue;
 	newEvent.code = EventCode;

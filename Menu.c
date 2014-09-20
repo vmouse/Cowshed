@@ -11,12 +11,9 @@ const _MenuItem MenuItems[] = {
 	{"Start prog1", 0},		// 0
 	{"Start prog2", 0},		// 1
 	{"Manual control", 0},	//2
-	{"Set timers", 4},		//3
-	{"Timer 1", 0}, //4
-	{"Timer 2", 0}, //5
-	{"Timer 3", 0}, //6
-	{"Set Time", 0},		//7
-	{"Set Date", 0},		//8
+	{"Set timers", 0}, //4
+	{"Set Time", MENU_ITEM_SET_TIME},		//7
+	{"Set Date", MENU_ITEM_SET_DATE},		//8
 };
 
 void ShowMenuItem(void) {
@@ -25,12 +22,16 @@ void ShowMenuItem(void) {
 	lcd_out("Menu:");
 	lcd_pos(0x10);
 	lcd_out(MenuItems[MenuCursor].Title);
-	if (MenuItems[MenuCursor].SubMenuIndex != 0) { lcd_dat('>'); }
 }
 
-void StartMenu() {
-	MenuCursor=8;
+void StartMenu(void) {
+	MenuCursor=0;
 	ShowMenuItem();
+}
+
+void StopMenu(void) {
+	lcd_clear();
+	lcd_out("Exit");
 }
 
 void ProcessMenu(uint8_t key) {
@@ -41,21 +42,21 @@ void ProcessMenu(uint8_t key) {
 			if (MenuCursor >= (sizeof(MenuItems)/sizeof(MenuItems[0]))) {
 				MenuCursor = 0;
 			}
-			//ShowMenuItem();
+			ShowMenuItem();
 			break;
 		case '#': // enter menu item
-			newEvent.value = MenuCursor;
+			newEvent.value = MenuItems[MenuCursor].Code;
 			newEvent.code = EVENT_MENU_EXECUTE;
 			saf_eventBusSend(newEvent);
 			break;
 		case '*': // cancel menu
-			newEvent.value = MenuCursor;
+			StopMenu();
+			newEvent.value = MenuItems[MenuCursor].Code;
 			newEvent.code = EVENT_MENU_EXIT;
 			saf_eventBusSend(newEvent);
 			break;
 		default:
 			break;
 	}
-	ShowMenuItem();
 }
 

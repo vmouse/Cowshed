@@ -346,6 +346,9 @@ void onEvent(saf_Event event)
 		if (state.bits.userinput == 1) {
 			ProcessInput(event.value);
 		} else	
+		if (state.bits.config == 1) {
+			ProcessMenu(event.value);
+		} else
 			switch (event.value) {
 			case 'A': // start button
 				if (state.bits.started == 0) {
@@ -369,7 +372,7 @@ void onEvent(saf_Event event)
 	if (event.code == EVENT_INPUT_CANCELED)
 	{
 		state.bits.userinput = 0;
-		ResetState();
+		if (state.bits.config == 1) { ShowMenuItem(); }
 	} else
 	if (event.code == EVENT_INPUT_COMPLETED)
 	{
@@ -393,14 +396,16 @@ void onEvent(saf_Event event)
 	if (event.code == EVENT_MENU_EXECUTE) {
 		char buf[sizeof("##.##.####")];
 		switch (event.value) {
-			case 7:
-				state.bits.userinput = 1;
-				lcd_clear(); lcd_pos(0x04); lcd_out("Set date:");
-				StartInput('D', "##.##.####", 0x12, DS1307_GetTimeStr(buf));
-			case 8:
+			case MENU_ITEM_SET_TIME:
 				state.bits.userinput = 1;
 				lcd_clear(); lcd_pos(0x04); lcd_out("Set time:");
 				StartInput('T', "##:##:##", 0x14, DS1307_GetTimeStr(buf));
+				break;
+			case MENU_ITEM_SET_DATE:
+				state.bits.userinput = 1;
+				lcd_clear(); lcd_pos(0x04); lcd_out("Set date:");
+				StartInput('D', "##.##.####", 0x13, DS1307_GetDateStr(buf));
+				break;
 			default:
 				break;
 		}	
