@@ -56,6 +56,7 @@ void ProcessMenu(uint8_t key) {
 			saf_eventBusSend(newEvent);
 			break;
 		default:
+			ShowMenuItem();
 			break;
 	}
 }

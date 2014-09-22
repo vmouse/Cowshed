@@ -47,7 +47,7 @@ void Set_Control_Byte(uint8_t data) {
 		data = data << 1;
 	}
 	STROBE(PortControl, PClatch);  // Out enable
-	DELAY;
+	lcd_pos(0x0e); lcd_hex(ControlPortState);
 }
 
 
@@ -104,7 +104,7 @@ uint16_t TimersArray[] = {1/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60,
 
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
 const _cmd_type CmdArray[] = {
-/*
+
 // test prog
    {'P', 0x02},
    {'T', 0x00},
@@ -130,7 +130,7 @@ const _cmd_type CmdArray[] = {
    {'P', 0x01},
    {'T', 0x00},
    {'W', 0x00},
-*/
+/*
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
    {'W', 0x81}, // 02: Ждем наполнения или ошибки окончания таймера
@@ -193,7 +193,7 @@ const _cmd_type CmdArray[] = {
    {'T', 0x07}, // 3B: Взводим таймер на t7 = 2 мин
    {'W', 0x00}, // 3C: Ждем еще 2 минуты
    {'P', 0x00}, // 3D: Все отключаем и оставляем слив
-
+*/
 };  // test port output
 
 
@@ -237,6 +237,7 @@ void ShowSensors(void)
 {
 	if (state.bits.config==1) return; 
 	lcd_pos(0x1E); lcd_hex(CurSensors);
+	lcd_pos(0x0E); lcd_hex(ControlPortState);
 }
 
 void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
@@ -400,7 +401,7 @@ void onEvent(saf_Event event)
 				SetDate(Hex2Int(&InputBuffer[8]), Hex2Int(&InputBuffer[3]), Hex2Int(&InputBuffer[0]));
 				break;
 			case 'P':
-				Set_Control_Byte(BitsToInt(InputBuffer, '1'));
+				Set_Control_Byte(BitsToInt(&InputBuffer, '1'));
 				break;
 			case 'W':
 				// set timer value
@@ -427,7 +428,7 @@ void onEvent(saf_Event event)
 			case MENU_ITEM_SET_PORT_DIRECT:
 				state.bits.userinput = 1;
 				lcd_clear(); lcd_pos(0x00); lcd_out("Set port direct:");
-				StartInput("P", "########", 0x15, IntToBitsStr(ControlPortState, buf, '0', '1'));
+				StartInput('P', "########", 0x15, IntToBitsStr(ControlPortState, buf, '0', '1'));
 				break;
 
 			default:
@@ -484,8 +485,8 @@ void ResetState(void) {
 	timer_stop(-1);
 	Set_Control_Byte(0);
 	Set_Control_Byte(0);
-	lcd_init();	lcd_clear(); lcd_out(" Covshed  ver.2");
-//	Set_Control_Byte(0);
+	lcd_init();	lcd_clear(); 
+	lcd_pos(0x03); lcd_out("Cowshed-2");
 }
 
 void SaveFlash(void) {
@@ -522,9 +523,10 @@ int main(void)
 {
 
 //	char buf[]="00000000";
-//	StartInput("P", "########", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
+//	StartInput("P", "#\n", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
 
-//	uint8_t a = BitsToInt("111", '1');
+//	IntToBitsStr(0x07, buf, '0','1');
+//	uint8_t a = BitsToInt(buf, '1');
 //	lcd_out(a);
 //	StartInput("D", "##.##.20##", 0x10, DS1307_GetDateStr(buf));
 
@@ -564,7 +566,6 @@ ProcessInput(0x32);
 //	lcd_init(); // lcd initialized in reset
 	DS1307_Init();
 //	SetTimeDate(0x14, 0x09, 0x06, 0x02, 0x37); // Set time into 1307 chip
-
 
 	// Simple AVR framework (SAF) initializationwaa
 	saf_init();
