@@ -138,18 +138,29 @@ char* shift_and_mul_utoa16(uint16_t n, uint8_t *buffer, uint8_t zerro_char)
 	return buffer;
 }
 
-void lcd_bits(uint8_t n, uint8_t zerro_char)
+void lcd_bits(uint8_t n, char clear_bit_char, char set_bit_char)
 {
-	for (int i=7; i>=0; i--) {
-		lcd_dat((n & 0x01) + zerro_char);
-		n = n >> 1;
+	for (int i=0; i<8; i++) {
+		if ((n & 0x80) == 0) { 
+			lcd_dat(clear_bit_char);
+		} else {
+			lcd_dat(set_bit_char);
+		}
+		n = n << 1;
 	}
+}
+
+// display one hex digit (0...F)
+void lcd_hexdigit(uint8_t data) {
+	data = data + '0';
+	if (data>'9') data+=7; // characters A-F
+	lcd_dat(data);
 }
 
 // displays the hex value of DATA at current LCD cursor position
 void lcd_hex(uint8_t data)
 {
-	char	hex[]="0123456789ABCDEF";
-	lcd_dat(hex[data>>4]);  // display it on LCD
-	lcd_dat(hex[data&0x0f]);
+	lcd_hexdigit(data>>4);
+	lcd_hexdigit(data&0x0f);
 }
+

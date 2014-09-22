@@ -33,7 +33,13 @@
 //Эта фича позволяет писать внутри функций так:
 //char * mystr = PSTR( ":)" );
 
+
+uint8_t ControlPortState = 0;			// что сейчас в порту
+uint8_t cmd_index = 0;			// индекс текущей команды в программе
+
+
 void Set_Control_Byte(uint8_t data) {
+	ControlPortState = data; // запоминаем состояние порта
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
 	for (uint8_t i=0;i<8;i++) {
 		SENDBIT(PortControl, PCdata, data);
@@ -44,10 +50,6 @@ void Set_Control_Byte(uint8_t data) {
 	DELAY;
 }
 
-
-uint8_t portdata = 0;			// что выводим в порты
-
-uint8_t cmd_index = 0;			// индекс текущей команды в программе
 
 
 uint8_t EEMEM flash_cmd_index = 0;	// сюда запоминаем последний индекс команды записи в порт
@@ -397,6 +399,9 @@ void onEvent(saf_Event event)
 			case 'D':
 				SetDate(Hex2Int(&InputBuffer[8]), Hex2Int(&InputBuffer[3]), Hex2Int(&InputBuffer[0]));
 				break;
+			case 'P':
+				Set_Control_Byte(BitsToInt(InputBuffer, '1'));
+				break;
 			case 'W':
 				// set timer value
 			break;
@@ -419,6 +424,12 @@ void onEvent(saf_Event event)
 				lcd_clear(); lcd_pos(0x04); lcd_out("Set date:");
 				StartInput('D', "##.##.####", 0x13, DS1307_GetDateStr(buf));
 				break;
+			case MENU_ITEM_SET_PORT_DIRECT:
+				state.bits.userinput = 1;
+				lcd_clear(); lcd_pos(0x00); lcd_out("Set port direct:");
+				StartInput("P", "########", 0x15, IntToBitsStr(ControlPortState, buf, '0', '1'));
+				break;
+
 			default:
 				break;
 		}	
@@ -479,14 +490,14 @@ void ResetState(void) {
 
 void SaveFlash(void) {
 	flash_cmd_index = cmd_index;
-	flash_portdata = portdata;
+	flash_portdata = ControlPortState;
 	flash_state = state.value;
 	flash_wait_mask = wait_mask.value;
 }
 
 void RestFlash(void) {
 	cmd_index = flash_cmd_index;
-	portdata = flash_portdata;
+	ControlPortState = flash_portdata;
 	state.value = flash_state;
 	wait_mask.value = flash_wait_mask;
 }
@@ -510,17 +521,23 @@ void onEvent_test(saf_Event event)
 int main(void)
 {
 
-	StartMenu();
-	ProcessMenu('C');
-	ProcessMenu('*');
+//	char buf[]="00000000";
+//	StartInput("P", "########", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
+
+//	uint8_t a = BitsToInt("111", '1');
+//	lcd_out(a);
 //	StartInput("D", "##.##.20##", 0x10, DS1307_GetDateStr(buf));
 
+
+//StartInput("##:##", 0x10);	
+//ProcessInput('1');
+//ProcessInput('0');
+//ProcessInput('1');
+//ProcessInput('0');
+//ProcessInput('#');
+//uint8_t n = BitsToInt(InputBuffer, '1');
+//lcd_out(n);
 /*
-StartInput("##:##", 0x10);	
-ProcessInput(0x31);
-ProcessInput(0x32);
-ProcessInput(0x33);
-ProcessInput(0x34);
 ProcessInput(0x35);
 ProcessInput(0x36);
 ProcessInput(0x37);

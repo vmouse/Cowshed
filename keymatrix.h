@@ -3,6 +3,7 @@
 
 #include "saf2core.h"
 #include "lcd.h"
+#include "strfunc.h"
 
 #define KEY_REPEAT_DELAY 10
 #define MAX_INPUT_BUF 16
@@ -22,5 +23,6 @@ void KeyMatrix_onEvent(saf_Event event);
 void StartInput(uint8_t EventValue, char *Mask, uint8_t Pos, char *DefValue);
 void ProcessInput(uint8_t key);
 uint8_t Hex2Int(char str[]);
+uint8_t BitsToInt(char str[], char set_bit_char);
 
 #endif

@@ -218,6 +218,12 @@
     <Compile Include="saf2core.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="strfunc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="strfunc.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="timers.c">
       <SubType>compile</SubType>
     </Compile>

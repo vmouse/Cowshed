@@ -110,12 +110,3 @@ void ProcessInput(uint8_t key) {
 		StopInput(EVENT_INPUT_COMPLETED);
 	}
 }
-
-uint8_t Hex2Int(char str[]) {
-	uint8_t num1 = str[0]-'0';
-	if (num1 > 9) { num1 -= 7; }
-	num1 = num1 << 4;
-	uint8_t num2 = str[1]-'0';
-	if (num2 > 9) { num2 -= 7; }
-	return num1 + num2;
-}

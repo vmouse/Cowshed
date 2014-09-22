@@ -6,6 +6,7 @@
 
 #define MENU_ITEM_SET_TIME	1
 #define MENU_ITEM_SET_DATE	2
+#define MENU_ITEM_SET_PORT_DIRECT 3
 
 typedef struct {
 	char*	Title;

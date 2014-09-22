@@ -8,12 +8,12 @@
 
 uint8_t MenuCursor=0;
 const _MenuItem MenuItems[] = {
-	{"Start prog1", 0},		// 0
-	{"Start prog2", 0},		// 1
-	{"Manual control", 0},	//2
-	{"Set timers", 0}, //4
-	{"Set Time", MENU_ITEM_SET_TIME},		//7
-	{"Set Date", MENU_ITEM_SET_DATE},		//8
+	{"Start prog1", 0},		
+	{"Start prog2", 0},		
+	{"Manual control", MENU_ITEM_SET_PORT_DIRECT},	
+	{"Set timers", 0}, 
+	{"Set Time", MENU_ITEM_SET_TIME},		
+	{"Set Date", MENU_ITEM_SET_DATE},		
 };
 
 void ShowMenuItem(void) {

@@ -5,6 +5,7 @@
 #include "bits.h"
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include "strfunc.h"
 
 #define PortInterface PORTC
 #define PortKeyboard PINC
@@ -67,8 +68,9 @@ void lcd_dat(unsigned char p);
 void lcd_clear(void);
 void lcd_pos(uint8_t pos);
 void lcd_out(char *str);
+void lcd_hexdigit(uint8_t data);
 void lcd_hex(uint8_t data);
-void lcd_bits(uint8_t n, uint8_t zerro_char);
+void lcd_bits(uint8_t n, char clear_bit_char, char set_bit_char);
 
 #define lcd_cursor_on lcd_com(LCD_DISPLAYCONTROL | LCD_DISPLAYON | LCD_CURSORON | LCD_BLINKON)
 #define lcd_cursor_off lcd_com(LCD_DISPLAYCONTROL | LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKOFF)
