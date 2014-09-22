@@ -102,6 +102,7 @@ uint16_t TimersArray[] = {1/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60,
 
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
 const _cmd_type CmdArray[] = {
+/*
 // test prog
    {'P', 0x02},
    {'T', 0x00},
@@ -127,7 +128,7 @@ const _cmd_type CmdArray[] = {
    {'P', 0x01},
    {'T', 0x00},
    {'W', 0x00},
-/*
+*/
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
    {'W', 0x81}, // 02: Ждем наполнения или ошибки окончания таймера
@@ -190,7 +191,7 @@ const _cmd_type CmdArray[] = {
    {'T', 0x07}, // 3B: Взводим таймер на t7 = 2 мин
    {'W', 0x00}, // 3C: Ждем еще 2 минуты
    {'P', 0x00}, // 3D: Все отключаем и оставляем слив
-*/
+
 };  // test port output
 
 
@@ -206,6 +207,7 @@ void Dynamic_Indication(void) {
 
 // Show command by index
 void ShowCmd(uint16_t cmd_index) {
+	if (state.bits.config==1) return;
 	_cmd_type Cmd = CmdArray[cmd_index];
 	uint8_t buf[6];
 	shift_and_mul_utoa16(cmd_index+1, buf, 0x30); // bcd convertion
@@ -216,6 +218,8 @@ void ShowCmd(uint16_t cmd_index) {
 
 // Show seconds counter value 
 void ShowTime(uint16_t data) {
+	if (state.bits.config==1) return;
+
 	uint8_t mins = data / 60; if (mins>99) mins=99;
 	uint8_t secs = data % 60;
 
@@ -229,6 +233,7 @@ void ShowTime(uint16_t data) {
 
 void ShowSensors(void)
 {
+	if (state.bits.config==1) return; 
 	lcd_pos(0x1E); lcd_hex(CurSensors);
 }
 
@@ -236,12 +241,16 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 	timer_stop(-1); // stop all timers
 	state.bits.error=1;
 	state.bits.started = 0;
+	if (state.bits.config == 1) {
+		StopMenu();
+		state.bits.config = 0;
+	}
 
 	uint8_t buf[6];
 	shift_and_mul_utoa16(ErrorCode+1, buf, 0x30); // bcd convertion
 
 	lcd_clear();
-	lcd_pos(0x04);	lcd_out((uint8_t[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
+	lcd_pos(0x04);	lcd_out((char[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
 	ShowCmd(ErrorCode);
 	lcd_dat(' ');
 	switch (ErrorClass) {
@@ -262,6 +271,10 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 
 void ShowEnd(void) {
 	timer_stop(-1); // stop all timers
+	if (state.bits.config == 1) {
+		StopMenu();
+		state.bits.config = 0;
+	}
 	lcd_clear(); 
 	lcd_pos(0x03);
 	lcd_out((uint8_t[]){66,195,190,111,187,189,101,189,111,46,0}); // Выполнено.
