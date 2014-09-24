@@ -70,6 +70,10 @@ uint8_t Hex2Int(char str[]) {
 	return num1 + num2;
 }
 
+uint8_t Dec2Int(char str[]) {
+	return (str[0]-'0') * 10 + str[1]-'0';
+}
+
 uint8_t BitsToInt(char *str, char set_bit_char) {
 	uint8_t res = 0;
 	while (*str != 0) {

@@ -101,7 +101,8 @@ void ProcessInput(uint8_t key) {
 	} else
 	if (key == '#') {
 		key = 0;
-	} else {
+	} else 
+	if ((key < 'A') || (InputMask[MaskPos] != '#')) { // если в маске #, то допустимы только цифры
 		lcd_dat(key);
 		InputBuffer[InputPos] = key;
 		InputPos++; MaskPos++;

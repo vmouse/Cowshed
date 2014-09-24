@@ -40,6 +40,7 @@ uint8_t cmd_index = 0;			// индекс текущей команды в про
 
 void OutDataPort(uint8_t data) {
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
+
 	for (uint8_t i=0;i<8;i++) {
 		SENDBIT(PortControl, PCdata, data);
 		STROBE(PortControl, PCshift);   // Shift
@@ -57,11 +58,10 @@ void Set_Control_Byte(uint8_t data) {
 
 
 
-uint8_t EEMEM flash_cmd_index = 0;	// сюда запоминаем последний индекс команды записи в порт
-uint8_t EEMEM flash_portdata = 0;	// запоминаем что вывели порт
-uint8_t EEMEM flash_state = 0;		// запоминаем состояние
-uint8_t EEMEM flash_wait_mask = 0;
-
+uint8_t flash_cmd_index EEMEM ;	// сюда запоминаем последний индекс команды записи в порт
+uint8_t flash_portdata EEMEM ;	// запоминаем что вывели порт
+uint8_t flash_state EEMEM ;		// запоминаем состояние
+uint8_t flash_wait_mask EEMEM ;
 
 #define STATE_VALUE_START 0x01; // комбинация бит на старт программы
 union { struct
@@ -94,10 +94,13 @@ typedef struct {
 } _cmd_type;
 
 void SaveFlash(void);
+void RestFlash(void);
 void ResetState(void);
 
 // Фиксированные периоды для таймеров
-uint16_t TimersArray[] = {1/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
+#define MAX_FIXED_TIMERS 10
+uint16_t flash_TimersArray[MAX_FIXED_TIMERS] EEMEM  = {01/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60}; // сюда запоминаем таймеры
+uint16_t TimersArray[MAX_FIXED_TIMERS] = {01/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
 // 0 - сюда будем замерять время
 // 1 - 30 сек, перекачка моющего раствора 1
 // 2 - 30 сек, перекачка моющего раствора 2
@@ -106,7 +109,7 @@ uint16_t TimersArray[] = {1/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60,
 // 5 - 15 мин, время обязательной мойки раствором 2
 // 6 - 11 мин, время просушки
 // 7 - 2 мин. доп.просушка
-// 8 - 10 мин, максимальное время заполнения танка 
+// 8 - 10 мин, максимальное время заполнения танка
 // 9 - 15 мин, максимальное время слива танка
 
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
@@ -137,6 +140,7 @@ const _cmd_type CmdArray[] = {
    {'P', 0x01},
    {'T', 0x00},
    {'W', 0x00},
+   {'P', 0x00},
 /*
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
@@ -416,8 +420,9 @@ void onEvent(saf_Event event)
 				break;
 			case 'W':
 				// set timer value
-				TimersArray[SelectedTimer] = Hex2Int(&InputBuffer[0])*3600 + Hex2Int(&InputBuffer[3])*60 + Hex2Int(&InputBuffer[6]);
-			break;
+				TimersArray[SelectedTimer] = Dec2Int(&InputBuffer[0])*3600 + Dec2Int(&InputBuffer[3])*60 + Dec2Int(&InputBuffer[6]);
+				eeprom_write_word (&flash_TimersArray[SelectedTimer], TimersArray[SelectedTimer]);
+				break;
 			default: break;
 		}
 		// return to menu
@@ -444,8 +449,8 @@ void onEvent(saf_Event event)
 				break;
 			case MENU_ITEM_SET_TIMERS:
 				state.bits.userinput = 1;
-				lcd_clear(); lcd_pos(0x04); lcd_out("Set timer "); lcd_dat(SelectedTimer+'0');
-				StartInput('T', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+				lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_dat(SelectedTimer+'0');
+				StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
 				break;
 			case MENU_ITEM_START_1:
 				StartProg(0);
@@ -506,22 +511,33 @@ void ResetState(void) {
 	cmd_index = 0;
 	timer_stop(-1);
 	Set_Control_Byte(0);
-	lcd_init();	lcd_clear(); 
+	lcd_init();	lcd_clear();
+	RestFlash(); // Resote saved values;
+
 	lcd_pos(0x03); lcd_out("Cowshed-2");
 }
 
 void SaveFlash(void) {
-	flash_cmd_index = cmd_index;
-	flash_portdata = ControlPortState;
-	flash_state = state.value;
-	flash_wait_mask = wait_mask.value;
+//	flash_cmd_index = cmd_index;
+//	flash_portdata = ControlPortState;
+//	flash_state = state.value;
+//	flash_wait_mask = wait_mask.value;
+	eeprom_write_block(TimersArray, flash_TimersArray, MAX_FIXED_TIMERS * sizeof(flash_TimersArray[0]));
+
+//	for (int i=0; i<MAX_FIXED_TIMERS; i++) {
+//		eeprom_write_word(&flash_TimersArray[i], TimersArray[i]);
+//	}
 }
 
 void RestFlash(void) {
-	cmd_index = flash_cmd_index;
-	ControlPortState = flash_portdata;
-	state.value = flash_state;
-	wait_mask.value = flash_wait_mask;
+//	cmd_index = flash_cmd_index;
+//	ControlPortState = flash_portdata;
+//	state.value = flash_state;
+//	wait_mask.value = flash_wait_mask;
+//	for (int i=0; i<MAX_FIXED_TIMERS; i++) {
+//		TimersArray[i] = eeprom_read_word (&flash_TimersArray[i]);
+//	}
+	eeprom_read_block(TimersArray, flash_TimersArray, MAX_FIXED_TIMERS * sizeof(flash_TimersArray[0]));
 }
 
 void onEvent_test(saf_Event event)
@@ -542,8 +558,7 @@ void onEvent_test(saf_Event event)
 
 int main(void)
 {
-
-//	char buf[]="----------";
+//	char buf0
 //	SecondsToTimeStr(3600*2 + 60 *3 + 4, buf);
 //lcd_out(buf);
 //	StartInput("P", "#\n", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
@@ -583,12 +598,19 @@ ProcessInput(0x32);
 //while (1) {
 	//Set_Control_Byte(2);
 //}
+
+//	RestFlash();
+
+	lcd_init();	lcd_clear();
+	lcd_pos(0x00); lcd_out("Initialization");
+
 	// State machine initialization
 	ResetState();
 
 //	lcd_init(); // lcd initialized in reset
 	DS1307_Init();
 //	SetTimeDate(0x14, 0x09, 0x06, 0x02, 0x37); // Set time into 1307 chip
+
 
 	// Simple AVR framework (SAF) initializationwaa
 	saf_init();
@@ -614,7 +636,7 @@ ProcessInput(0x32);
     {
 //		LCD_TimeDate();
 		saf_process();
-		if (state.bits.end || state.value==0) {
+		if ((state.bits.end || state.value==0) & (state.bits.config == 0)) {
 			lcd_pos(0x14); LCD_Time(); ShowSensors();
 		} else if (state.bits.waiting == 0 && state.bits.started == 1) {
 			Do_Command();
