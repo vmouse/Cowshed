@@ -1,4 +1,4 @@
-#include "keymatrix.h"
+п»ї#include "keymatrix.h"
 #include <string.h>
 
 uint8_t CurMatrixKey=0;
@@ -28,8 +28,8 @@ void Interface_Read() {
 void KeyMatrix_onEvent(saf_Event event) {
 	if (event.code == EVENT_SAFTICK) {
 		Interface_Read();
-		if (CurMatrixKey | LastMatrixKey) { // что-то нажали или отжали
-			if ((CurMatrixKey != LastMatrixKey) || (KeyDelay == 0)) { // таймаут дребезга закончен
+		if (CurMatrixKey | LastMatrixKey) { // С‡С‚Рѕ-С‚Рѕ РЅР°Р¶Р°Р»Рё РёР»Рё РѕС‚Р¶Р°Р»Рё
+			if ((CurMatrixKey != LastMatrixKey) || (KeyDelay == 0)) { // С‚Р°Р№РјР°СѓС‚ РґСЂРµР±РµР·РіР° Р·Р°РєРѕРЅС‡РµРЅ
 				KeyDelay = KEY_REPEAT_DELAY; 
 				saf_Event newEvent;
 				if (CurMatrixKey == 0) {
@@ -63,9 +63,9 @@ void StopInput(uint8_t EventCode) {
 	saf_eventBusSend(newEvent);
 }
 
-// работа с маской ввода, возвращает 0, если маска закончилась
+// СЂР°Р±РѕС‚Р° СЃ РјР°СЃРєРѕР№ РІРІРѕРґР°, РІРѕР·РІСЂР°С‰Р°РµС‚ 0, РµСЃР»Рё РјР°СЃРєР° Р·Р°РєРѕРЅС‡РёР»Р°СЃСЊ
 uint8_t ParseInputMask(void) {
-	// обработка маски
+	// РѕР±СЂР°Р±РѕС‚РєР° РјР°СЃРєРё
 	while ((InputMask[MaskPos] != '#') && (MaskPos < MAX_INPUT_BUF) && (InputMask[MaskPos] != 0 )) {
 		lcd_dat(InputMask[MaskPos]);
 		InputBuffer[InputPos] = InputMask[MaskPos];
@@ -90,10 +90,10 @@ void StartInput(uint8_t EventValue, char *Mask, uint8_t Pos, char *DefValue) {
 	lcd_pos(Pos);
 	lcd_cursor_on;
 
-	ParseInputMask(); // в начале маски ввода могут быть символы для вывода
+	ParseInputMask(); // РІ РЅР°С‡Р°Р»Рµ РјР°СЃРєРё РІРІРѕРґР° РјРѕРіСѓС‚ Р±С‹С‚СЊ СЃРёРјРІРѕР»С‹ РґР»СЏ РІС‹РІРѕРґР°
 }
 
-// обработка очередного символа
+// РѕР±СЂР°Р±РѕС‚РєР° РѕС‡РµСЂРµРґРЅРѕРіРѕ СЃРёРјРІРѕР»Р°
 void ProcessInput(uint8_t key) {
 	if (key == '*') {
 		StopInput(EVENT_INPUT_CANCELED);
@@ -102,7 +102,7 @@ void ProcessInput(uint8_t key) {
 	if (key == '#') {
 		key = 0;
 	} else 
-	if ((key < 'A') || (InputMask[MaskPos] != '#')) { // если в маске #, то допустимы только цифры
+	if ((key < 'A') || (InputMask[MaskPos] != '#')) { // РµСЃР»Рё РІ РјР°СЃРєРµ #, С‚Рѕ РґРѕРїСѓСЃС‚РёРјС‹ С‚РѕР»СЊРєРѕ С†РёС„СЂС‹
 		lcd_dat(key);
 		InputBuffer[InputPos] = key;
 		InputPos++; MaskPos++;
