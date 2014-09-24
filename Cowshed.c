@@ -38,8 +38,7 @@ uint8_t ControlPortState = 0;			// что сейчас в порту
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
 
 
-void Set_Control_Byte(uint8_t data) {
-	ControlPortState = data; // запоминаем состояние порта
+void OutDataPort(uint8_t data) {
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
 	for (uint8_t i=0;i<8;i++) {
 		SENDBIT(PortControl, PCdata, data);
@@ -47,6 +46,12 @@ void Set_Control_Byte(uint8_t data) {
 		data = data << 1;
 	}
 	STROBE(PortControl, PClatch);  // Out enable
+}
+
+void Set_Control_Byte(uint8_t data) {
+	ControlPortState = data; // запоминаем состояние порта
+	OutDataPort(0);		// очищаем значения порта
+	OutDataPort(data);	// выставляем значения порта
 	lcd_pos(0x0e); lcd_hex(ControlPortState);
 }
 
@@ -57,6 +62,8 @@ uint8_t EEMEM flash_portdata = 0;	// запоминаем что вывели п
 uint8_t EEMEM flash_state = 0;		// запоминаем состояние
 uint8_t EEMEM flash_wait_mask = 0;
 
+
+#define STATE_VALUE_START 0x01; // комбинация бит на старт программы
 union { struct
 	{
 		uint8_t started : 1;	// обязательно должен быть младшим битом
@@ -355,8 +362,16 @@ void Do_Command(void) {			// выполнение комманды програ�
 	}
 }
 
+void StartProg(uint8_t ProgIndex) {
+	if (state.bits.started == 0) {
+	cmd_index = 0;
+	state.value = STATE_VALUE_START; // все флаги сбрасываем, кроме старта
+		lcd_clear();
+	}
+}
+
 void onEvent(saf_Event event)
-{
+{	
 	if (event.code == EVENT_KEY_DOWN)
 	{
 		if (state.bits.userinput == 1) {
@@ -367,11 +382,7 @@ void onEvent(saf_Event event)
 		} else
 			switch (event.value) {
 			case 'A': // start button
-				if (state.bits.started == 0) {
-					cmd_index = 0;
-					state.value = 1; // все флаги сбрасываем, кроме старта
-					lcd_clear();
-				}
+				StartProg(0);
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
@@ -405,6 +416,7 @@ void onEvent(saf_Event event)
 				break;
 			case 'W':
 				// set timer value
+				TimersArray[SelectedTimer] = Hex2Int(&InputBuffer[0])*3600 + Hex2Int(&InputBuffer[3])*60 + Hex2Int(&InputBuffer[6]);
 			break;
 			default: break;
 		}
@@ -430,7 +442,17 @@ void onEvent(saf_Event event)
 				lcd_clear(); lcd_pos(0x00); lcd_out("Set port direct:");
 				StartInput('P', "########", 0x15, IntToBitsStr(ControlPortState, buf, '0', '1'));
 				break;
-
+			case MENU_ITEM_SET_TIMERS:
+				state.bits.userinput = 1;
+				lcd_clear(); lcd_pos(0x04); lcd_out("Set timer "); lcd_dat(SelectedTimer+'0');
+				StartInput('T', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+				break;
+			case MENU_ITEM_START_1:
+				StartProg(0);
+				break;
+			case MENU_ITEM_START_2:
+				StartProg(1);
+				break;
 			default:
 				break;
 		}	
@@ -484,7 +506,6 @@ void ResetState(void) {
 	cmd_index = 0;
 	timer_stop(-1);
 	Set_Control_Byte(0);
-	Set_Control_Byte(0);
 	lcd_init();	lcd_clear(); 
 	lcd_pos(0x03); lcd_out("Cowshed-2");
 }
@@ -522,7 +543,9 @@ void onEvent_test(saf_Event event)
 int main(void)
 {
 
-//	char buf[]="00000000";
+//	char buf[]="----------";
+//	SecondsToTimeStr(3600*2 + 60 *3 + 4, buf);
+//lcd_out(buf);
 //	StartInput("P", "#\n", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
 
 //	IntToBitsStr(0x07, buf, '0','1');

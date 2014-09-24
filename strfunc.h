@@ -19,8 +19,10 @@
 #include <stdint.h>
 #include "strfunc.h"
 
+char* shift_and_mul_utoa16(uint16_t n, char *buffer, char zerro_char); 
 char* IntToBitsStr(uint8_t n, char buffer[], char clear_bit_char, char set_bit_char);
 uint8_t Hex2Int(char str[]);
 uint8_t BitsToInt(char *str, char set_bit_char);
+char* SecondsToTimeStr(uint16_t n, char buffer[]);
 
 #endif /* STRFUNC_H_ */

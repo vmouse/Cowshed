@@ -8,8 +8,8 @@
 
 uint8_t MenuCursor=0;
 const _MenuItem MenuItems[] = {
-	{"Start prog1", 0},		
-	{"Start prog2", 0},		
+	{"Start prog - 1", MENU_ITEM_START_1},		
+	{"Start prog - 2", MENU_ITEM_START_2},		
 	{"Manual control", MENU_ITEM_SET_PORT_DIRECT},	
 	{"Set timers", 0}, 
 	{"Set Time", MENU_ITEM_SET_TIME},		
