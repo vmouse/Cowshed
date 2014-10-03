@@ -6,7 +6,6 @@
  */ 
 #include "Menu.h"
 
-uint8_t MenuCursor=0;
 const _MenuItem MenuItems[] = {
 	{"Start prog - 1", MENU_ITEM_START_1},		
 	{"Start prog - 2", MENU_ITEM_START_2},		
@@ -16,6 +15,8 @@ const _MenuItem MenuItems[] = {
 	{"Set Date", MENU_ITEM_SET_DATE},		
 };
 
+uint8_t MenuCursor=0;
+
 void ShowMenuItem(void) {
 	lcd_clear();
 	lcd_pos(0x05);
@@ -24,7 +25,7 @@ void ShowMenuItem(void) {
 	lcd_out(MenuItems[MenuCursor].Title);
 }
 
-void StartMenu(void) {
+void StartMenu() {
 	MenuCursor=0;
 	ShowMenuItem();
 }
@@ -34,7 +35,7 @@ void StopMenu(void) {
 	lcd_out("Exit");
 }
 
-void ProcessMenu(uint8_t key) {
+void ProcessMenuKey(uint8_t key) {	
 	saf_Event newEvent;
 	switch (key) {
 		case 'C': // next menu item
@@ -58,6 +59,14 @@ void ProcessMenu(uint8_t key) {
 		default:
 			ShowMenuItem();
 			break;
+	}
+}
+
+void ProcessMenu(uint8_t key) {
+	if (state.bits.settimers == 1) {
+		ProcessTimersSet(key);
+		} else {
+		ProcessMenuKey(key);
 	}
 }
 
