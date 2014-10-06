@@ -1,4 +1,4 @@
-#ifndef MENU_H
+п»ї#ifndef MENU_H
 #define MENU_H
 
 #include "lcd.h"
@@ -16,7 +16,7 @@
 
 #ifdef  MAIN_FILE
 uint8_t MenuCursor=0;
-uint8_t SelectedTimer=0;		// индекс выбранного для конфигурирования таймера
+uint8_t SelectedTimer=0;		// РёРЅРґРµРєСЃ РІС‹Р±СЂР°РЅРЅРѕРіРѕ РґР»СЏ РєРѕРЅС„РёРіСѓСЂРёСЂРѕРІР°РЅРёСЏ С‚Р°Р№РјРµСЂР°
 #else
 extern uint8_t MenuCursor;
 extern uint8_t SelectedTimer;

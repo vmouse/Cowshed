@@ -1,4 +1,4 @@
-/*
+п»ї/*
  * Menu.c
  *
  * Created: 19.09.2014 18:14:00
@@ -71,7 +71,7 @@ void	ProcessTimersSet(uint8_t key, _cow_state *state) {
 			if (SelectedTimer>=sizeof(TimersArray)/sizeof(TimersArray[0])) {
 				SelectedTimer = 0;
 			}
-			// вывод значения таймера
+			// РІС‹РІРѕРґ Р·РЅР°С‡РµРЅРёСЏ С‚Р°Р№РјРµСЂР°
 			lcd_clear(); 
 			lcd_out("Timer "); lcd_hexdigit(SelectedTimer); 
 			lcd_pos(0x14); 
