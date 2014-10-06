@@ -31,6 +31,7 @@ typedef struct {
 void StartMenu(void);
 void StopMenu(void);
 void ShowMenuItem(void);
-void ProcessMenu(uint8_t key, _cow_state state);
+void ProcessMenu(uint8_t key, _cow_state *state);
+void ProcessTimersSet(uint8_t key, _cow_state *state);
 
 #endif

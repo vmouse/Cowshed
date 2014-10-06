@@ -227,7 +227,7 @@ void onEvent(saf_Event event)
 			ProcessInput(event.value);
 		} else	
 		if (state.bits.config == 1) {
-			ProcessMenu(event.value, state);
+			ProcessMenu(event.value, &state);
 		} else
 			switch (event.value) {
 			case 'A': // start button
@@ -271,9 +271,28 @@ void onEvent(saf_Event event)
 			default: break;
 		}
 		// return to menu
-		ProcessMenu(0, state);
+		ProcessMenu(0, &state);
 	} else
 
+	if (event.code == EVENT_SENSORS)
+	{
+		switch (event.value) {
+			case 1: // high level sensor
+				if ((wait_mask.bits.sensor_high !=0) && (state.bits.waiting == 1)) { 
+					state.bits.waiting = 0; 
+					timer_stop(wait_mask.bits.timer_num);
+				}
+				break;
+			case 2: // low level sensor
+				if ((wait_mask.bits.sensor_low !=0) && (state.bits.waiting == 1)) { 
+					state.bits.waiting = 0;
+					timer_stop(wait_mask.bits.timer_num);
+				}
+			break;
+			default:
+				break;	
+		}
+	} else 
 	if (event.code == EVENT_MENU_EXECUTE) {
 		char buf[sizeof("##.##.####")];
 		switch (event.value) {
@@ -307,31 +326,11 @@ void onEvent(saf_Event event)
 				break;
 			default:
 				break;
-		}	
+		}
 	} else
 	if (event.code == EVENT_MENU_EXIT) {
 		state.bits.config = 0;
 	} else
-
-	if (event.code == EVENT_SENSORS)
-	{
-		switch (event.value) {
-			case 1: // high level sensor
-				if ((wait_mask.bits.sensor_high !=0) && (state.bits.waiting == 1)) { 
-					state.bits.waiting = 0; 
-					timer_stop(wait_mask.bits.timer_num);
-				}
-				break;
-			case 2: // low level sensor
-				if ((wait_mask.bits.sensor_low !=0) && (state.bits.waiting == 1)) { 
-					state.bits.waiting = 0;
-					timer_stop(wait_mask.bits.timer_num);
-				}
-			break;
-			default:
-				break;	
-		}
-	} else 
 	if (event.code == EVENT_TIMER_TICK) // отображаем прогресс таймера 0
 	{	
 		if (timer_iswork(0)==1) {
@@ -359,7 +358,7 @@ void ResetState(void) {
 	timer_stop(-1);
 	Set_Control_Byte(0);
 	lcd_init();	lcd_clear();
-	RestFlash(); // Resote saved values;
+//	RestFlash(); // Resote saved values;
 
 	lcd_pos(0x03); lcd_out("Cowshed-2");
 }
@@ -405,7 +404,7 @@ void onEvent_test(saf_Event event)
 
 int main(void)
 {
-//	char buf0
+//	char buf[sizeof("##:##:##")];
 //	SecondsToTimeStr(3600*2 + 60 *3 + 4, buf);
 //lcd_out(buf);
 //	StartInput("P", "#\n", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
@@ -414,7 +413,8 @@ int main(void)
 //	uint8_t a = BitsToInt(buf, '1');
 //	lcd_out(a);
 //	StartInput("D", "##.##.20##", 0x10, DS1307_GetDateStr(buf));
-
+//	StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+//ProcessTimersSet('C', &state);
 
 //StartInput("##:##", 0x10);	
 //ProcessInput('1');
@@ -445,8 +445,6 @@ ProcessInput(0x32);
 //while (1) {
 	//Set_Control_Byte(2);
 //}
-
-//	RestFlash();
 
 	lcd_init();	lcd_clear();
 	lcd_pos(0x00); lcd_out("Initialization");

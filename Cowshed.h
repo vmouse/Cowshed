@@ -67,8 +67,5 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode);
 void ShowEnd(void);
 void Do_Command(void);
 void StartProg(uint8_t ProgIndex);
-void ResetState(void);
-void SaveFlash(void);
-void RestFlash(void);
 
 #endif

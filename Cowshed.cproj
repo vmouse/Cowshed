@@ -173,6 +173,9 @@
     <Compile Include="Cowshed.c">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="Cowshed.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="ds1307.c">
       <SubType>compile</SubType>
     </Compile>

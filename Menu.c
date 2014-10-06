@@ -7,6 +7,7 @@
 #include "Menu.h"
 #include "ProgArray.h"
 #include "keymatrix.h"
+#include "ds1307.h"
 
 const _MenuItem MenuItems[] = {
 	{"Start prog - 1", MENU_ITEM_START_1},		
@@ -62,35 +63,38 @@ void ProcessMenuKey(uint8_t key) {
 	}
 }
 
-void	ProcessTimersSet(uint8_t key, _cow_state state) {
+void	ProcessTimersSet(uint8_t key, _cow_state *state) {
 	char buf[sizeof("##:##:##")];
 	switch (key) {
 		case 'C': // next timer
-		SelectedTimer++;
-		if (SelectedTimer>=sizeof(TimersArray)/sizeof(TimersArray[0])) {
-			SelectedTimer = 0;
-		}
-		// вывод значения таймера
-		lcd_pos(0x00);
-		lcd_out("Timer "); lcd_hexdigit(SelectedTimer);
-		lcd_out(" = "); lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
-		break;
+			SelectedTimer++;
+			if (SelectedTimer>=sizeof(TimersArray)/sizeof(TimersArray[0])) {
+				SelectedTimer = 0;
+			}
+			// вывод значения таймера
+			lcd_clear(); 
+			lcd_out("Timer "); lcd_hexdigit(SelectedTimer); 
+			lcd_pos(0x14); 
+			lcd_out(DS1307_GetTimeStr(buf));
+//			lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+			break;
 		case '#': // enter timer value
-		state.bits.userinput = 1;
-		lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_hexdigit(SelectedTimer);
-		StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
-		break;
+			(*state).bits.userinput = 1;
+			lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_hexdigit(SelectedTimer);
+			StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+			break;
 		case '*': // exit from timer setting
-		state.bits.settimers = 0;
-		ShowMenuItem();
-		break;
+			(*state).bits.settimers = 0; 
+			SelectedTimer = 0;
+			ProcessMenu(0, state);
+			break;
 		default:
-		break;
+			break;
 	}
 }
 
-void ProcessMenu(uint8_t key, _cow_state state) {
-	if (state.bits.settimers == 1) {
+void ProcessMenu(uint8_t key, _cow_state *state) {
+	if ((*state).bits.settimers == 1) {
 		ProcessTimersSet(key, state);
 		} else {
 		ProcessMenuKey(key);
