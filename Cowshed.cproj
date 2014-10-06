@@ -212,6 +212,9 @@
     <Compile Include="Menu.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="ProgArray.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="saf2core.c">
       <SubType>compile</SubType>
     </Compile>

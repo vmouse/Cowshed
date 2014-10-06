@@ -5,6 +5,27 @@
  *  Author: vlad 
  */ 
 #include "Cowshed.h"
+#define MAIN_FILE
+
+//#include "input.h"
+#include "saf2core.h"
+#include "timers.h"
+#include "bits.h"
+#include "lcd.h"
+#include "i2c.h"
+#include "ds1307.h"
+#include "keymatrix.h"
+#include "Menu.h"
+#include "ProgArray.h"
+
+uint8_t ControlPortState = 0;	// что сейчас в порту
+uint8_t cmd_index = 0;			// индекс текущей команды в программе
+//uint8_t flash_cmd_index EEMEM ;	// сюда запоминаем последний индекс команды записи в порт
+//uint8_t flash_portdata EEMEM ;	// запоминаем что вывели порт
+//uint8_t flash_state EEMEM ;		// запоминаем состояние
+//uint8_t flash_wait_mask EEMEM ;
+_cow_state state = {.value = 0x00 }; // состояние системы
+_cow_waiting_state wait_mask = { .value = 0 }; // маска ожидания события таймера или датчика
 
 void OutDataPort(uint8_t data) {
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
@@ -45,7 +66,7 @@ void Dynamic_Indication(void) {
 void ShowCmd(uint16_t cmd_index) {
 	if (state.bits.config==1) return;
 	_cmd_type Cmd = CmdArray[cmd_index];
-	uint8_t buf[6];
+	char buf[6];
 	shift_and_mul_utoa16(cmd_index+1, buf, 0x30); // bcd convertion
 	lcd_pos(0x10);
 	lcd_out(buf+2); lcd_out(": "); 
@@ -56,11 +77,11 @@ void ShowCmd(uint16_t cmd_index) {
 void ShowTime(uint16_t data) {
 	if (state.bits.config==1) return;
 
-	uint8_t mins = data / 60; if (mins>99) mins=99;
-	uint8_t secs = data % 60;
+	uint16_t mins = data / 60; if (mins>99) mins=99;
+	uint16_t secs = data % 60;
 
 	lcd_pos(0x1b);
-	uint8_t buf[6];
+	char buf[6];
 	shift_and_mul_utoa16(mins, buf, 0x30); 
 	lcd_out(buf+3);lcd_dat(':');
 	shift_and_mul_utoa16(secs, buf, 0x30); 
@@ -83,7 +104,7 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 		state.bits.config = 0;
 	}
 
-	uint8_t buf[6];
+	char buf[6];
 	shift_and_mul_utoa16(ErrorCode+1, buf, 0x30); // bcd convertion
 
 	lcd_clear();
@@ -114,7 +135,7 @@ void ShowEnd(void) {
 	}
 	lcd_clear(); 
 	lcd_pos(0x03);
-	lcd_out((uint8_t[]){66,195,190,111,187,189,101,189,111,46,0}); // Выполнено.
+	lcd_out((char[]){66,195,190,111,187,189,101,189,111,46,0}); // Выполнено.
 }
 
 void Do_Command(void) {			// выполнение комманды программы
@@ -197,33 +218,6 @@ void StartProg(uint8_t ProgIndex) {
 	}
 }
 
-void	ProcessTimersSet(uint8_t key) {
-	char buf[sizeof("##:##:##")];
-	switch (key) {
-		case 'C': // next timer
-			SelectedTimer++;
-			if (SelectedTimer>=sizeof(TimersArray)/sizeof(TimersArray[0])) {
-				SelectedTimer = 0;
-			}
-			// вывод значения таймера
-			lcd_pos(0x00); 
-			lcd_out("Timer "); lcd_hexdigit(SelectedTimer);
-			lcd_out(" = "); lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
-			break;
-		case '#': // enter timer value
-			state.bits.userinput = 1;
-			lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_hexdigit(SelectedTimer);
-			StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
-			break;
-		case '*': // exit from timer setting
-			state.bits.settimers = 0;
-			ShowMenuItem();
-			break;
-	default:
-		break;
-	}
-}
-
 
 void onEvent(saf_Event event)
 {	
@@ -233,7 +227,7 @@ void onEvent(saf_Event event)
 			ProcessInput(event.value);
 		} else	
 		if (state.bits.config == 1) {
-			ProcessMenu(event.value);
+			ProcessMenu(event.value, state);
 		} else
 			switch (event.value) {
 			case 'A': // start button
@@ -267,7 +261,7 @@ void onEvent(saf_Event event)
 				SetDate(Hex2Int(&InputBuffer[8]), Hex2Int(&InputBuffer[3]), Hex2Int(&InputBuffer[0]));
 				break;
 			case 'P':
-				Set_Control_Byte(BitsToInt(&InputBuffer, '1'));
+				Set_Control_Byte(BitsToInt(&InputBuffer[0], '1'));
 				break;
 			case 'W':
 				// set timer value
@@ -277,7 +271,7 @@ void onEvent(saf_Event event)
 			default: break;
 		}
 		// return to menu
-		ProcessMenu(0);
+		ProcessMenu(0, state);
 	} else
 
 	if (event.code == EVENT_MENU_EXECUTE) {

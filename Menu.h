@@ -3,6 +3,7 @@
 
 #include "lcd.h"
 #include "saf2core.h"
+#include "Cowshed.h"
 
 #define MENU_ITEM_SET_TIME	1
 #define MENU_ITEM_SET_DATE	2
@@ -13,6 +14,14 @@
 //#define MENU_LEVEL_MAIN 0
 //#define MENU_GO_SUBMENU 0x80
 
+#ifdef  MAIN_FILE
+uint8_t MenuCursor=0;
+uint8_t SelectedTimer=0;		// индекс выбранного для конфигурирования таймера
+#else
+extern uint8_t MenuCursor;
+extern uint8_t SelectedTimer;
+#endif
+
 
 typedef struct {
 	char*	Title;
@@ -22,6 +31,6 @@ typedef struct {
 void StartMenu(void);
 void StopMenu(void);
 void ShowMenuItem(void);
-void ProcessMenu(uint8_t key);
+void ProcessMenu(uint8_t key, _cow_state state);
 
 #endif

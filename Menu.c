@@ -5,6 +5,8 @@
  *  Author: vlad
  */ 
 #include "Menu.h"
+#include "ProgArray.h"
+#include "keymatrix.h"
 
 const _MenuItem MenuItems[] = {
 	{"Start prog - 1", MENU_ITEM_START_1},		
@@ -14,8 +16,6 @@ const _MenuItem MenuItems[] = {
 	{"Set Time", MENU_ITEM_SET_TIME},		
 	{"Set Date", MENU_ITEM_SET_DATE},		
 };
-
-uint8_t MenuCursor=0;
 
 void ShowMenuItem(void) {
 	lcd_clear();
@@ -62,9 +62,36 @@ void ProcessMenuKey(uint8_t key) {
 	}
 }
 
-void ProcessMenu(uint8_t key) {
+void	ProcessTimersSet(uint8_t key, _cow_state state) {
+	char buf[sizeof("##:##:##")];
+	switch (key) {
+		case 'C': // next timer
+		SelectedTimer++;
+		if (SelectedTimer>=sizeof(TimersArray)/sizeof(TimersArray[0])) {
+			SelectedTimer = 0;
+		}
+		// вывод значения таймера
+		lcd_pos(0x00);
+		lcd_out("Timer "); lcd_hexdigit(SelectedTimer);
+		lcd_out(" = "); lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+		break;
+		case '#': // enter timer value
+		state.bits.userinput = 1;
+		lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_hexdigit(SelectedTimer);
+		StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+		break;
+		case '*': // exit from timer setting
+		state.bits.settimers = 0;
+		ShowMenuItem();
+		break;
+		default:
+		break;
+	}
+}
+
+void ProcessMenu(uint8_t key, _cow_state state) {
 	if (state.bits.settimers == 1) {
-		ProcessTimersSet(key);
+		ProcessTimersSet(key, state);
 		} else {
 		ProcessMenuKey(key);
 	}

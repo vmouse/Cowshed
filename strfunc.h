@@ -4,18 +4,8 @@
  * Created: 22.09.2014 17:56:01
  *  Author: vlad
  */ 
-
-
 #ifndef STRFUNC_H_
 #define STRFUNC_H_
-
-
-/*
- * strfunc.c
- *
- * Created: 22.09.2014 17:55:19
- *  Author: vlad
- */ 
 #include <stdint.h>
 #include "strfunc.h"
 
