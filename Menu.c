@@ -75,8 +75,8 @@ void	ProcessTimersSet(uint8_t key, _cow_state *state) {
 			lcd_clear(); 
 			lcd_out("Timer "); lcd_hexdigit(SelectedTimer); 
 			lcd_pos(0x14); 
-			lcd_out(DS1307_GetTimeStr(buf));
-//			lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+//			lcd_out(DS1307_GetTimeStr(buf));
+			lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
 			break;
 		case '#': // enter timer value
 			(*state).bits.userinput = 1;

@@ -404,9 +404,10 @@ void onEvent_test(saf_Event event)
 
 int main(void)
 {
-//	char buf[sizeof("##:##:##")];
+	char buf[] = "##:##:##";
 //	SecondsToTimeStr(3600*2 + 60 *3 + 4, buf);
-//lcd_out(buf);
+	SecondsToTimeStr(65535, buf);
+lcd_out(buf);
 //	StartInput("P", "#\n", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
 
 //	IntToBitsStr(0x07, buf, '0','1');
