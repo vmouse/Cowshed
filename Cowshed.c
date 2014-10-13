@@ -7,8 +7,8 @@
 #include "Cowshed.h"
 #define MAIN_FILE
 
-//#include "input.h"
-#include "saf2core.h"
+#include "strfunc.h"
+//#include "saf2core.h"
 #include "timers.h"
 #include "bits.h"
 #include "lcd.h"
@@ -67,7 +67,7 @@ void ShowCmd(uint16_t cmd_index) {
 	if (state.bits.config==1) return;
 	_cmd_type Cmd = CmdArray[cmd_index];
 	char buf[6];
-	shift_and_mul_utoa16(cmd_index+1, buf, 0x30); // bcd convertion
+	int16_to_str(cmd_index+1, buf, 0x30); // bcd convertion
 	lcd_pos(0x10);
 	lcd_out(buf+2); lcd_out(": "); 
 	lcd_dat(Cmd.cmd_name); lcd_hex(Cmd.cmd_data);
@@ -82,9 +82,9 @@ void ShowTime(uint16_t data) {
 
 	lcd_pos(0x1b);
 	char buf[6];
-	shift_and_mul_utoa16(mins, buf, 0x30); 
+	int16_to_str(mins, buf, 0x30); 
 	lcd_out(buf+3);lcd_dat(':');
-	shift_and_mul_utoa16(secs, buf, 0x30); 
+	int16_to_str(secs, buf, 0x30); 
 	lcd_out(buf+3);
 }
 
@@ -105,7 +105,7 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 	}
 
 	char buf[6];
-	shift_and_mul_utoa16(ErrorCode+1, buf, 0x30); // bcd convertion
+	int16_to_str(ErrorCode+1, buf, 0x30); // bcd convertion
 
 	lcd_clear();
 	lcd_pos(0x04);	lcd_out((char[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
@@ -358,34 +358,19 @@ void ResetState(void) {
 	timer_stop(-1);
 	Set_Control_Byte(0);
 	lcd_init();	lcd_clear();
-//	RestFlash(); // Resote saved values;
+	RestFlash(); // Resote saved values;
 
 	lcd_pos(0x03); lcd_out("Cowshed-2");
 }
 
 void SaveFlash(void) {
-//	flash_cmd_index = cmd_index;
-//	flash_portdata = ControlPortState;
-//	flash_state = state.value;
-//	flash_wait_mask = wait_mask.value;
 	eeprom_write_block(TimersArray, flash_TimersArray, MAX_FIXED_TIMERS * sizeof(flash_TimersArray[0]));
-
-//	for (int i=0; i<MAX_FIXED_TIMERS; i++) {
-//		eeprom_write_word(&flash_TimersArray[i], TimersArray[i]);
-//	}
 }
 
 void RestFlash(void) {
-//	cmd_index = flash_cmd_index;
-//	ControlPortState = flash_portdata;
-//	state.value = flash_state;
-//	wait_mask.value = flash_wait_mask;
-//	for (int i=0; i<MAX_FIXED_TIMERS; i++) {
-//		TimersArray[i] = eeprom_read_word (&flash_TimersArray[i]);
-//	}
 	eeprom_read_block(TimersArray, flash_TimersArray, MAX_FIXED_TIMERS * sizeof(flash_TimersArray[0]));
 }
-
+/*
 void onEvent_test(saf_Event event)
 {
 	if (event.code == EVENT_KEY_DOWN)
@@ -401,13 +386,15 @@ void onEvent_test(saf_Event event)
 	}
 
 }
+*/
 
-int main(void)
+uint8_t main(void)
 {
-	char buf[] = "##:##:##";
+//	lcd_out(TestCmd);
+//	char buf[] = "##:##:##";
 //	SecondsToTimeStr(3600*2 + 60 *3 + 4, buf);
-	SecondsToTimeStr(65535, buf);
-lcd_out(buf);
+//	SecondsToTimeStr(65535, buf);
+//lcd_out(buf);
 //	StartInput("P", "#\n", 0x10, IntToBitsStr(0x0f, buf, '0', '1'));
 
 //	IntToBitsStr(0x07, buf, '0','1');
@@ -476,11 +463,8 @@ ProcessInput(0x32);
 //		}
 //	}
 
-
-
     while(1)
     {
-//		LCD_TimeDate();
 		saf_process();
 		if ((state.bits.end || state.value==0) & (state.bits.config == 0)) {
 			lcd_pos(0x14); LCD_Time(); ShowSensors();

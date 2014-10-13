@@ -9,8 +9,8 @@
 
 // BCD function from http://homepage.cs.uiowa.edu/~jones/bcd/decimal.html
 // Need buffer size >=6
-char* shift_and_mul_utoa16(uint16_t n, char *buffer, char zerro_char)
-{
+char* int16_to_str(uint16_t n, char *buffer, char zerro_char)
+{  // shift_and_mul_utoa16 method
 	uint8_t d4, d3, d2, d1, q, d0;
 
 	d1 = (n>>4)  & 0xF;
@@ -90,19 +90,19 @@ char* SecondsToTimeStr(uint16_t n, char buffer[]) {
 	char buf[6];
 	char *ptr = buffer;
 	uint16_t tmp = n / 3600;
-	shift_and_mul_utoa16(tmp, buf, '0');
+	int16_to_str(tmp, buf, '0');
 	*ptr++ = buf[3];
 	*ptr++ = buf[4];
 	*ptr++ = ':';
 	n -= tmp * 3600;
 	tmp = n / 60;
 	lcd_pos(n);
-	shift_and_mul_utoa16(tmp, buf, '0');
+	int16_to_str(tmp, buf, '0');
 	*ptr++ = buf[3];
 	*ptr++ = buf[4];
 	*ptr++ = ':';
 	n -= tmp * 60;
-	shift_and_mul_utoa16(n, buf, '0');
+	int16_to_str(n, buf, '0');
 	*ptr++ = buf[3];
 	*ptr++ = buf[4];
 	*ptr++ = 0;
