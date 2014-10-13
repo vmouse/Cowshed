@@ -24,8 +24,7 @@
 uint16_t flash_TimersArray[MAX_FIXED_TIMERS] EEMEM  = {01/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60}; // сюда запоминаем таймеры
 uint16_t TimersArray[MAX_FIXED_TIMERS] = {01/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
-const _cmd_type CmdArray[] = {
-
+_cmd_type Prog1[] = {
 // test prog
    {'P', 0x02},
    {'T', 0x00},
@@ -52,9 +51,10 @@ const _cmd_type CmdArray[] = {
    {'T', 0x00},
    {'W', 0x00},
    {'P', 0x00},
-   {0xFF, 0xFF},
+   {0, 0}
+};
 
-/*
+_cmd_type Prog2[] = {
    {'P', 0x2C}, // 00: Наполнение основного бака для полоскания
    {'T', 0x08}, // 01: Взводим таймер на t8 = 10 мин
    {'W', 0x81}, // 02: Ждем наполнения или ошибки окончания таймера
@@ -117,15 +117,14 @@ const _cmd_type CmdArray[] = {
    {'T', 0x07}, // 3B: Взводим таймер на t7 = 2 мин
    {'W', 0x00}, // 3C: Ждем еще 2 минуты
    {'P', 0x00}, // 3D: Все отключаем и оставляем слив
-   {0xFF, 0xFF}, // End of prog
-*/
-};  // test port output
-
+   {0, 0} // End of prog
+};  
 
 #else
 extern uint16_t flash_TimersArray[MAX_FIXED_TIMERS] EEMEM;
 extern uint16_t TimersArray[MAX_FIXED_TIMERS];
-extern const _cmd_type CmdArray[];
+extern const _cmd_type Prog1[];
+extern const _cmd_type Prog2[];
 #endif
 
 

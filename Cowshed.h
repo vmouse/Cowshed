@@ -59,13 +59,13 @@ void SaveFlash(void);
 void RestFlash(void);
 void ResetState(void);
 // Show command by index
-void ShowCmd(uint16_t cmd_index);
+void ShowCmd(uint8_t cmd_index);
 // Show seconds counter value 
 void ShowTime(uint16_t data);
 void ShowSensors(void);
 void ShowError(uint8_t ErrorClass, uint8_t ErrorCode);
 void ShowEnd(void);
 void Do_Command(void);
-void StartProg(uint8_t ProgIndex);
+void StartProg(_cmd_type Prog[]);
 
 #endif

@@ -96,7 +96,6 @@ char* SecondsToTimeStr(uint16_t n, char buffer[]) {
 	*ptr++ = ':';
 	n -= tmp * 3600;
 	tmp = n / 60;
-	lcd_pos(n);
 	int16_to_str(tmp, buf, '0');
 	*ptr++ = buf[3];
 	*ptr++ = buf[4];

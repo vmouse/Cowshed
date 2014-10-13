@@ -20,6 +20,7 @@
 
 uint8_t ControlPortState = 0;	// что сейчас в порту
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
+_cmd_type* CmdArray;			// указатель на массив программы
 //uint8_t flash_cmd_index EEMEM ;	// сюда запоминаем последний индекс команды записи в порт
 //uint8_t flash_portdata EEMEM ;	// запоминаем что вывели порт
 //uint8_t flash_state EEMEM ;		// запоминаем состояние
@@ -46,24 +47,8 @@ void Set_Control_Byte(uint8_t data) {
 }
 
 
-
-uint8_t flash_cmd_index EEMEM ;	// сюда запоминаем последний индекс команды записи в порт
-uint8_t flash_portdata EEMEM ;	// запоминаем что вывели порт
-uint8_t flash_state EEMEM ;		// запоминаем состояние
-uint8_t flash_wait_mask EEMEM ;
-
-/*
-void Dynamic_Indication(void) {
-	write_data((1<<ind_digit)<<4);  // выбрать сегмент
-	write_data(ind_data[ind_digit]);  // вывести число
-	OUT_REG;
-	ind_digit++;
-	if (ind_digit>3) { ind_digit=0; }
-}
-*/
-
 // Show command by index
-void ShowCmd(uint16_t cmd_index) {
+void ShowCmd(uint8_t cmd_index) {
 	if (state.bits.config==1) return;
 	_cmd_type Cmd = CmdArray[cmd_index];
 	char buf[6];
@@ -139,13 +124,16 @@ void ShowEnd(void) {
 }
 
 void Do_Command(void) {			// выполнение комманды программы
-	if (cmd_index>=sizeof(CmdArray)/sizeof(CmdArray[0])) {
+
+	_cmd_type Cmd = CmdArray[cmd_index];
+	
+	if (Cmd.cmd_name == 0) {
+//	if (cmd_index>=sizeof(CmdArray)/sizeof(CmdArray[0])) {
 		state.bits.started = 0;
 		state.bits.end = 1;
 		ShowEnd();
+		
 	} else {
-
-	_cmd_type Cmd = CmdArray[cmd_index];
 
 	ShowCmd(cmd_index);
 
@@ -210,9 +198,10 @@ void Do_Command(void) {			// выполнение комманды програ�
 	}
 }
 
-void StartProg(uint8_t ProgIndex) {
+void StartProg(_cmd_type Prog[]) {
 	if (state.bits.started == 0) {
 	cmd_index = 0;
+	CmdArray = Prog;
 	state.value = STATE_VALUE_START; // все флаги сбрасываем, кроме старта
 		lcd_clear();
 	}
@@ -231,11 +220,14 @@ void onEvent(saf_Event event)
 		} else
 			switch (event.value) {
 			case 'A': // start button
-				StartProg(0);
+				StartProg(Prog1);
+				break;
+			case 'B': // start button
+				StartProg(Prog2);
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
-				StartMenu();
+				StartMenu( &state);
 				break; 
 			case '*': // reset
 				ResetState();
@@ -248,7 +240,9 @@ void onEvent(saf_Event event)
 	if (event.code == EVENT_INPUT_CANCELED)
 	{
 		state.bits.userinput = 0;
-		if (state.bits.config == 1) { ShowMenuItem(); }
+		if (state.bits.config == 1) { 				
+			ShowMenuItem(&state); 
+		}
 	} else
 	if (event.code == EVENT_INPUT_COMPLETED)
 	{
@@ -271,7 +265,7 @@ void onEvent(saf_Event event)
 			default: break;
 		}
 		// return to menu
-		ProcessMenu(0, &state);
+		ShowMenuItem(&state);
 	} else
 
 	if (event.code == EVENT_SENSORS)
@@ -313,16 +307,13 @@ void onEvent(saf_Event event)
 				break;
 			case MENU_ITEM_SET_TIMERS:
 				state.bits.settimers = 1; // timers config mode
-				lcd_clear(); lcd_pos(0x00); lcd_out("Set timer "); lcd_hexdigit(SelectedTimer);
-//				state.bits.userinput = 1;
-//				lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_dat(SelectedTimer+'0');
-//				StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+				ShowMenuItem(&state);
 				break;
 			case MENU_ITEM_START_1:
-				StartProg(0);
+				StartProg(Prog1);
 				break;
 			case MENU_ITEM_START_2:
-				StartProg(1);
+				StartProg(Prog2);
 				break;
 			default:
 				break;
@@ -358,7 +349,7 @@ void ResetState(void) {
 	timer_stop(-1);
 	Set_Control_Byte(0);
 	lcd_init();	lcd_clear();
-	RestFlash(); // Resote saved values;
+//	RestFlash(); // Resote saved values;
 
 	lcd_pos(0x03); lcd_out("Cowshed-2");
 }
@@ -388,10 +379,15 @@ void onEvent_test(saf_Event event)
 }
 */
 
-uint8_t main(void)
+int main(void)
 {
-//	lcd_out(TestCmd);
+//	CmdArray = Prog1;
+//	lcd_out(CmdArray[0].cmd_name);
+//	CmdArray = Prog2;
+//	lcd_out(CmdArray[1].cmd_name);
+//	char buf[sizeof("##:##:##")];
 //	char buf[] = "##:##:##";
+//	lcd_out(SecondsToTimeStr(30, buf));
 //	SecondsToTimeStr(3600*2 + 60 *3 + 4, buf);
 //	SecondsToTimeStr(65535, buf);
 //lcd_out(buf);

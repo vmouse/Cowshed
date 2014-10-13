@@ -28,10 +28,9 @@ typedef struct {
 	uint8_t Code;
 } _MenuItem;
 
-void StartMenu(void);
+void StartMenu(_cow_state *state);
 void StopMenu(void);
-void ShowMenuItem(void);
+void ShowMenuItem(_cow_state *state);
 void ProcessMenu(uint8_t key, _cow_state *state);
-void ProcessTimersSet(uint8_t key, _cow_state *state);
 
 #endif

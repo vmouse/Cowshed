@@ -22,8 +22,20 @@ void timer_setup(uint8_t timer_index, uint16_t timer_count) {
 	}
 }
 
+void timer_set_end_state(uint8_t timer_index) {
+	saf_Event newEvent;
+	_timers_table.timer_state[timer_index] = TIMER_STATE_STOP;
+	newEvent.value = timer_index;
+	newEvent.code = EVENT_TIMER_END;
+	saf_eventBusSend(newEvent);
+}
+
 void timer_start(uint8_t timer_index) {
-	_timers_table.timer_state[timer_index] = TIMER_STATE_START;
+	if (_timers_table.timer_count[timer_index] > 0) {
+		_timers_table.timer_state[timer_index] = TIMER_STATE_START;
+	} else { // стартуем нулевой таймер
+		timer_set_end_state(timer_index);
+	}
 }
 
 void _reset_timer(uint8_t timer_index) {
@@ -38,17 +50,13 @@ void timer_stop(uint8_t timer_index) {
 		}
 	} else _timers_table.timer_state[timer_index] = TIMER_STATE_STOP;
 }
+
 uint16_t timer_get(uint8_t timer_index) {
 	return _timers_table.timer_count[timer_index];
 }
 
 uint8_t timer_iswork(uint8_t timer_index) {
 	return (_timers_table.timer_state[timer_index] == TIMER_STATE_START)?1:0;
-}
-
-void timers_init(uint8_t TickEvent, uint16_t presc) {
-	_timers_prescaler=presc; // предварительный делитель
-	_timers_event=TickEvent;
 }
 
 void timers_onEvent(saf_Event event) {
@@ -65,8 +73,6 @@ void timers_onEvent(saf_Event event) {
 			uint8_t value;
 			} flags = {.value = 0x01 }; //set all_end only
 			
-			saf_Event newEvent;
-
 			// цикл по всему массиву таймеров
 			for (uint8_t i=0; i<TIMERS_MAX; i++) {
 				if (_timers_table.timer_state[i] != TIMER_STATE_STOP) { // подразумеваем, что не стопнутый таймер имеет счетчик >0
@@ -74,16 +80,15 @@ void timers_onEvent(saf_Event event) {
 						_timers_table.timer_count[i]--; 
 						flags.bits.tick = 1;
 						if (_timers_table.timer_count[i] == 0) {		// таймер досчитал - событие
-							_timers_table.timer_state[i] = TIMER_STATE_STOP;
-							newEvent.value = i;
-							newEvent.code = EVENT_TIMER_END;
-							saf_eventBusSend(newEvent);
+							timer_set_end_state(i);
 							flags.bits.any_end = 1;							// флаг, что есть закончивший
 						} else flags.bits.all_end = 0;						// флаг, что есть незакончивший 
 					} else { flags.bits.all_end = 0; }						// есть таймер в паузе, т.е. есть незакончивший
 				}
 			}
 			
+			saf_Event newEvent;
+
 			if (flags.bits.tick==1 && flags.bits.all_end==1) { // все таймеры закончили (и никого нет в паузе)
 				newEvent.code = EVENT_ALL_TIMERS_END;
 				saf_eventBusSend(newEvent);
@@ -97,6 +102,11 @@ void timers_onEvent(saf_Event event) {
 		} else _timers_prescaler_cnt--;
 
 	}
+}
+
+void timers_init(uint8_t TickEvent, uint16_t presc) {
+	_timers_prescaler=presc; // предварительный делитель
+	_timers_event=TickEvent;
 }
 
 void SaveTimersToFlash(void) {

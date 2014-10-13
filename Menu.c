@@ -18,17 +18,25 @@ const _MenuItem MenuItems[] = {
 	{"Set Date", MENU_ITEM_SET_DATE},		
 };
 
-void ShowMenuItem(void) {
-	lcd_clear();
-	lcd_pos(0x05);
-	lcd_out("Menu:");
-	lcd_pos(0x10);
-	lcd_out(MenuItems[MenuCursor].Title);
+void ShowMenuItem(_cow_state *state) {
+	char buf[sizeof("##:##:##")];
+	if ((*state).bits.settimers == 1) {
+		// вывод значения таймера
+		lcd_clear();
+		lcd_pos(0x04);	lcd_out("Timer "); lcd_hexdigit(SelectedTimer);
+		lcd_pos(0x14);	lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
+	} else {
+		lcd_clear();
+		lcd_pos(0x05);
+		lcd_out("Menu:");
+		lcd_pos(0x10);
+		lcd_out(MenuItems[MenuCursor].Title);
+	}
 }
 
-void StartMenu() {
+void StartMenu(_cow_state *state) {
 	MenuCursor=0;
-	ShowMenuItem();
+	ShowMenuItem(state);
 }
 
 void StopMenu(void) {
@@ -36,7 +44,7 @@ void StopMenu(void) {
 	lcd_out("Exit");
 }
 
-void ProcessMenuKey(uint8_t key) {	
+void ProcessMenuKey(uint8_t key, _cow_state *state) {	
 	saf_Event newEvent;
 	switch (key) {
 		case 'C': // next menu item
@@ -44,7 +52,7 @@ void ProcessMenuKey(uint8_t key) {
 			if (MenuCursor >= (sizeof(MenuItems)/sizeof(MenuItems[0]))) {
 				MenuCursor = 0;
 			}
-			ShowMenuItem();
+			ShowMenuItem(state);
 			break;
 		case '#': // enter menu item
 			newEvent.value = MenuItems[MenuCursor].Code;
@@ -58,7 +66,7 @@ void ProcessMenuKey(uint8_t key) {
 			saf_eventBusSend(newEvent);
 			break;
 		default:
-			ShowMenuItem();
+			ShowMenuItem(state);
 			break;
 	}
 }
@@ -71,18 +79,11 @@ void	ProcessTimersSet(uint8_t key, _cow_state *state) {
 			if (SelectedTimer>=sizeof(TimersArray)/sizeof(TimersArray[0])) {
 				SelectedTimer = 0;
 			}
-			// вывод значения таймера
-			lcd_clear(); 
-			lcd_out("Timer "); lcd_hexdigit(SelectedTimer); 
-			lcd_pos(0x14); 
-//			lcd_out(DS1307_GetTimeStr(buf));
-//			lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
-			lcd_out(SecondsToTimeStr(30, buf));
-//			lcd_out(shift_and_mul_utoa16(TimersArray[SelectedTimer], buf, '0'));
+			ShowMenuItem( state);
 			break;
 		case '#': // enter timer value
 			(*state).bits.userinput = 1;
-			lcd_clear(); lcd_pos(0x02); lcd_out("Set timer "); lcd_hexdigit(SelectedTimer);
+			lcd_clear(); lcd_pos(0x01); lcd_out("Change timer "); lcd_hexdigit(SelectedTimer);
 			StartInput('W', "##:##:##", 0x14, SecondsToTimeStr(TimersArray[SelectedTimer], buf));
 			break;
 		case '*': // exit from timer setting
@@ -91,6 +92,7 @@ void	ProcessTimersSet(uint8_t key, _cow_state *state) {
 			ProcessMenu(0, state);
 			break;
 		default:
+			ShowMenuItem( state);
 			break;
 	}
 }
@@ -99,7 +101,7 @@ void ProcessMenu(uint8_t key, _cow_state *state) {
 	if ((*state).bits.settimers == 1) {
 		ProcessTimersSet(key, state);
 		} else {
-		ProcessMenuKey(key);
+		ProcessMenuKey(key, state);
 	}
 }
 
