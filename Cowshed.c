@@ -220,10 +220,10 @@ void onEvent(saf_Event event)
 		} else
 			switch (event.value) {
 			case 'A': // start button
-				StartProg(Prog1);
+				StartProg(Prog2);
 				break;
 			case 'B': // start button
-				StartProg(Prog2);
+				StartProg(Prog1);
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
@@ -348,10 +348,7 @@ void ResetState(void) {
 	cmd_index = 0;
 	timer_stop(-1);
 	Set_Control_Byte(0);
-	lcd_init();	lcd_clear();
-//	RestFlash(); // Resote saved values;
-
-	lcd_pos(0x03); lcd_out("Cowshed-2");
+	RestFlash(); // Resote saved values;
 }
 
 void SaveFlash(void) {
@@ -436,7 +433,6 @@ ProcessInput(0x32);
 	// State machine initialization
 	ResetState();
 
-//	lcd_init(); // lcd initialized in reset
 	DS1307_Init();
 //	SetTimeDate(0x14, 0x09, 0x06, 0x02, 0x37); // Set time into 1307 chip
 
@@ -447,6 +443,9 @@ ProcessInput(0x32);
 	saf_addEventHandler(KeyMatrix_onEvent);
 	saf_addEventHandler(timers_onEvent);
 	timers_init(EVENT_INT0, 0);
+
+	lcd_clear();
+	lcd_pos(0x03); lcd_out("Cowshed-2");
 
 	// Start
 	sei();

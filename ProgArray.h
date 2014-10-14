@@ -21,8 +21,10 @@
 // 9 - 15 мин, максимальное время слива танка
 #define MAX_FIXED_TIMERS 10
 #ifdef  MAIN_FILE
-uint16_t flash_TimersArray[MAX_FIXED_TIMERS] EEMEM  = {01/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60}; // сюда запоминаем таймеры
-uint16_t TimersArray[MAX_FIXED_TIMERS] = {01/*0*/, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
+uint16_t flash_TimersArray[MAX_FIXED_TIMERS] EEMEM  = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60}; // сюда запоминаем таймеры
+uint16_t TimersArray[MAX_FIXED_TIMERS];// = {0, 30, 30, 5*60, 15*60, 15*60, 11*60, 2*60, 5*60, 5*60};
+//uint16_t flash_TimersArray[MAX_FIXED_TIMERS] EEMEM  = {0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}; // сюда запоминаем таймеры
+//uint16_t TimersArray[MAX_FIXED_TIMERS]= {0, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09}; 
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
 _cmd_type Prog1[] = {
 // test prog

@@ -23,7 +23,7 @@ void ShowMenuItem(_cow_state *state) {
 	if ((*state).bits.settimers == 1) {
 		// вывод значения таймера
 		lcd_clear();
-		lcd_pos(0x04);	lcd_out("Timer "); lcd_hexdigit(SelectedTimer);
+		lcd_pos(0x04);	lcd_out("Timer: "); lcd_hexdigit(SelectedTimer);
 		lcd_pos(0x14);	lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
 	} else {
 		lcd_clear();
