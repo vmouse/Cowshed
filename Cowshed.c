@@ -20,7 +20,8 @@
 
 uint8_t ControlPortState = 0;	// что сейчас в порту
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
-_cmd_type* CmdArray;			// указатель на массив программы
+_cmd_type* CmdArray;			// указатель на текущую команду в программе			
+_cmd_type* ProgGoToAddr = 0;	// указатель на запускаемую программу или переход
 //uint8_t flash_cmd_index EEMEM ;	// сюда запоминаем последний индекс команды записи в порт
 //uint8_t flash_portdata EEMEM ;	// запоминаем что вывели порт
 //uint8_t flash_state EEMEM ;		// запоминаем состояние
@@ -200,9 +201,10 @@ void Do_Command(void) {			// выполнение комманды програ�
 
 void StartProg(_cmd_type Prog[]) {
 	if (state.bits.started == 0) {
-	cmd_index = 0;
-	CmdArray = Prog;
-	state.value = STATE_VALUE_START; // все флаги сбрасываем, кроме старта
+		cmd_index = 0; // reset program index
+		ProgGoToAddr = 0; // reset goto parameter
+		CmdArray = Prog;		
+		state.value = STATE_VALUE_START; // все флаги сбрасываем, кроме старта
 		lcd_clear();
 	}
 }
@@ -210,6 +212,9 @@ void StartProg(_cmd_type Prog[]) {
 
 void onEvent(saf_Event event)
 {	
+	if (ProgGoToAddr != 0 && event.code == EVENT_INT0) {
+		StartProg(ProgGoToAddr);
+	} else
 	if (event.code == EVENT_KEY_DOWN)
 	{
 		if (state.bits.userinput == 1) {
@@ -220,10 +225,10 @@ void onEvent(saf_Event event)
 		} else
 			switch (event.value) {
 			case 'A': // start button
-				StartProg(Prog2);
+				ProgGoToAddr = Prog2;
 				break;
 			case 'B': // start button
-				StartProg(Prog1);
+				ProgGoToAddr = Prog1;
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
