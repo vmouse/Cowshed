@@ -12,7 +12,7 @@ char utf_recode[] =
          0xbe,0x70,0x63,0xbf,0x79,0xe4,0x78,0xe5,0xc0,0xc1,0xe6,0xc2,0xc3,0xc4,0xc5,0xc6,0xc7
         };   
 */		
-void Set_Interface_Byte(uint8_t data) {
+void Set_Interface_Byte_old(uint8_t data) {
 	for (uint8_t i=0;i<8;i++) {
 		SENDBIT(PortInterface, Idata, data);
 		STROBE(PortInterface, Ishift);   // Shift
@@ -20,6 +20,18 @@ void Set_Interface_Byte(uint8_t data) {
 	}
 	STROBE(PortInterface, Ilatch);  // Out enable
 	DELAY;
+}
+
+void Set_Interface_Byte(uint8_t data) {
+	bit_clear(PortInterface,BIT(Ilatch));
+	for (uint8_t i=0;i<8;i++) {
+		bit_clear(PortInterface, BIT(Ishift)); // взвели строб в 1
+		bit_write(data & 0x80, PortInterface, BIT(Idata)); // вывели бит данных
+		bit_set(PortInterface, BIT(Ishift)); // послали строб сдвига
+		data <<= 1;
+	}
+	bit_set(PortInterface,BIT(Ilatch)); // послали строб записи в выходы
+	bit_write(0, PortInterface, BIT(Idata)); // обнуляем вход данных (не обязательно)
 }
 
 // send low 4 bit from data, RS_bit =0 for cmd mode, =1 for datamode

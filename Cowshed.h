@@ -16,7 +16,7 @@
 
 
 #define PortControl	PORTB
-#define PCshift		PB1 // Register strobe (shift clock)
+#define PCshift		PB7 //PB1 // Register strobe (shift clock)
 #define PCdata		PB0 // Register data
 #define PClatch		PB2 // Register out (latch clock)
 #define Sensor		PD3 // Sensor multiplexor

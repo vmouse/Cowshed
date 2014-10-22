@@ -8,8 +8,8 @@
 #include "strfunc.h"
 
 #define PortInterface PORTC
-#define PortKeyboard PINC
-#define PortSensors	 PIND
+#define PinKeyboard PINC
+#define PinSensors	PIND
 #define Ishift		PC1 // Register strobe (shift clock)
 #define Idata		PC3 // Register data
 #define Ilatch		PC0 // Register out (latch clock)

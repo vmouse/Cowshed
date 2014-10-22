@@ -5,14 +5,16 @@
 #include "lcd.h"
 #include "strfunc.h"
 
-#define KEY_REPEAT_DELAY 10
+#define KEY_REPEAT_DELAY 100
 #define MAX_INPUT_BUF 16
 
 #ifdef  MAIN_FILE
+uint8_t CurMatrixKey=0;
 uint8_t LastMatrixKey=0;
 uint8_t CurSensors=0;
 char InputBuffer[MAX_INPUT_BUF+1];
 #else
+extern  uint8_t CurMatrixKey;
 extern	uint8_t LastMatrixKey;
 extern  uint8_t CurSensors;
 extern  char InputBuffer[MAX_INPUT_BUF+1];

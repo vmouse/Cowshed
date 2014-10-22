@@ -1,7 +1,6 @@
 ﻿#include "keymatrix.h"
 #include <string.h>
 
-uint8_t CurMatrixKey=0;
 uint8_t KeyDelay=0;
 char	InputMask[MAX_INPUT_BUF];
 uint8_t InputPos=0;
@@ -15,12 +14,15 @@ void Interface_Read() {
 	CurSensors = 0; CurMatrixKey = 0;
 	while (col<0x10) {
 		Set_Interface_Byte( ((~(1<<(col>>2)))<<4) | (col & 0x03));
-		if ((PortSensors & BIT(Sensors))==0) {
+		_delay_us(50); // ждем мультиплексоры
+		if ((PinSensors & BIT(Sensors))==0) {
 			CurSensors|=col & 0x03;
 		}
-		if ((PortKeyboard & BIT(Keyboard))==0) {
+		if ((PinKeyboard & BIT(Keyboard))==0) {
 			CurMatrixKey=str[col];
+//			CurMatrixKey=col;
 		}
+//		_delay_us(50);
 		col++;
 	}
 }

@@ -25,6 +25,7 @@
 
 #define NOP asm("nop")
 #define DELAY NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;NOP;
+//#define DELAY _delay_us(20);
 
 #define STROBE(OutPort,StrobePin) DELAY;bit_set(OutPort,BIT(StrobePin));DELAY;bit_clear(OutPort,BIT(StrobePin));
 #define SENDBIT(OutPort,DataPin,data)	bit_write(data & 0x80, OutPort, BIT(DataPin));

@@ -6,6 +6,7 @@
  */ 
 #include "Cowshed.h"
 #define MAIN_FILE
+//#define F_CPU 8000000UL
 
 #include "strfunc.h"
 //#include "saf2core.h"
@@ -29,20 +30,27 @@ _cmd_type* ProgGoToAddr = 0;	// указатель на запускаемую �
 _cow_state state = {.value = 0x00 }; // состояние системы
 _cow_waiting_state wait_mask = { .value = 0 }; // маска ожидания события таймера или датчика
 
+
 void OutDataPort(uint8_t data) {
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
-
+	// работаем по переднему фронту
+	bit_clear(PortControl,BIT(PClatch));
 	for (uint8_t i=0;i<8;i++) {
-		SENDBIT(PortControl, PCdata, data);
-		STROBE(PortControl, PCshift);   // Shift
-		data = data << 1;
+		bit_clear(PortControl, BIT(PCshift)); // взвели строб в 1
+		bit_write(data & 0x80, PortControl, BIT(PCdata)); // вывели бит данных
+//		_delay_us(3);
+		bit_set(PortControl, BIT(PCshift)); // послали строб сдвига
+//		_delay_us(3);
+		data <<= 1;
 	}
-	STROBE(PortControl, PClatch);  // Out enable
+	bit_set(PortControl,BIT(PClatch)); // послали строб записи в выходы
+	bit_write(0, PortControl, BIT(PCdata)); // обнуляем вход данных (не обязательно)
+//	_delay_us(3);
 }
 
 void Set_Control_Byte(uint8_t data) {
 	ControlPortState = data; // запоминаем состояние порта
-	OutDataPort(0);		// очищаем значения порта
+//	OutDataPort(0);		// очищаем значения порта
 	OutDataPort(data);	// выставляем значения порта
 	lcd_pos(0x0e); lcd_hex(ControlPortState);
 }
@@ -167,8 +175,8 @@ void Do_Command(void) {			// выполнение комманды програ�
 		case 'G': // переход на несколько шагов
 			if ((Cmd.cmd_data & 0x80) == 0) {
 				cmd_index+=Cmd.cmd_data-1;
+				
 			} else	cmd_index-=(Cmd.cmd_data & 0x7f)+1;
-			ShowError(3,cmd_index);
 			break;			
 		case 'I': // переход на несколько шагов вперед если таймер досчитал до нуля
 			if (timer_get(hi(Cmd.cmd_data)) == 0) {
@@ -236,6 +244,7 @@ void onEvent(saf_Event event)
 				break; 
 			case '*': // reset
 				ResetState();
+				lcd_init();	lcd_clear();
 				break;
 			default:
 				break;
@@ -428,10 +437,17 @@ ProcessInput(0x32);
 	PORTB = 0xff;
 	PORTD = 0xff;
 
-//while (1) {
-	//Set_Control_Byte(2);
-//}
-
+/*
+ // диагностика в цикле
+	uint8_t data = 1;
+	while (1) {
+		Interface_Read();
+		OutDataPort(CurMatrixKey);	// в порт - синхронизацию
+//		data <<=1;
+//		if (!data) { data = 1; }
+//		_delay_ms(20);
+	}
+*/
 	lcd_init();	lcd_clear();
 	lcd_pos(0x00); lcd_out("Initialization");
 
@@ -463,6 +479,7 @@ ProcessInput(0x32);
 //		}
 //	}
 
+
     while(1)
     {
 		saf_process();
@@ -471,8 +488,8 @@ ProcessInput(0x32);
 		} else if (state.bits.waiting == 0 && state.bits.started == 1) {
 			Do_Command();
 		}
-
     }
+
 }
 
 
