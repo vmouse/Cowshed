@@ -255,7 +255,7 @@ void onEvent(saf_Event event)
 				if (state.bits.started == 0) { ProgGoToAddr = Prog2; }
 				break;
 			case 'B': // start button
-				if (state.bits.started == 0) { ProgGoToAddr = Prog1; }
+//				if (state.bits.started == 0) { ProgGoToAddr = Prog1; }
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
@@ -347,10 +347,10 @@ void onEvent(saf_Event event)
 				ShowMenuItem(&state);
 				break;
 			case MENU_ITEM_START_1:
-				StartProg(Prog1);
+				StartProg(Prog2);
 				break;
 			case MENU_ITEM_START_2:
-				StartProg(Prog2);
+				StartProg(Prog1);
 				break;
 			default:
 				break;

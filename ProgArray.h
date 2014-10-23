@@ -31,18 +31,6 @@ uint16_t TimersArray[MAX_FIXED_TIMERS];// = {0, 30, 30, 5*60, 15*60, 15*60, 11*6
 // Process commands array, cmd style:: Cmd, Arg, Reserved, Indicator
 _cmd_type Prog1[] = {
 // test prog
-	{'G',  2},
-   {'P', 0x02},
-   {'P', 0x04},
-   {'P', 0x08},
-   {'P', 0x10},
-   {'P', 0x20},
-   {'P', 0x40},
-   {'P', 0x80},
-   {'P', 0x01},
-   {'P', 0x00},
-{'G', 0x8A},
-/*
    {'P', 0x02},
    {'T', 0x00},
    {'W', 0x00},
@@ -72,8 +60,7 @@ _cmd_type Prog1[] = {
 //   {'P', 0x40},
 //   {'P', 0x80},
 //   {'P', 0x01},
-   {'G', 0x9A},
-*/	   
+   {'G', 0x9A},	   
    {0, 0}
 };
 
