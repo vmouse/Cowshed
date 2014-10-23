@@ -23,6 +23,7 @@ uint8_t ControlPortState = 0;	// что сейчас в порту
 uint8_t cmd_index = 0;			// индекс текущей команды в программе
 _cmd_type* CmdArray;			// указатель на текущую команду в программе			
 _cmd_type* ProgGoToAddr = 0;	// указатель на запускаемую программу или переход
+uint8_t LastTimerDelay = 0;		// тут помним последний индекс задержки который загоняли в таймер
 //uint8_t flash_cmd_index EEMEM ;	// сюда запоминаем последний индекс команды записи в порт
 //uint8_t flash_portdata EEMEM ;	// запоминаем что вывели порт
 //uint8_t flash_state EEMEM ;		// запоминаем состояние
@@ -30,11 +31,22 @@ _cmd_type* ProgGoToAddr = 0;	// указатель на запускаемую �
 _cow_state state = {.value = 0x00 }; // состояние системы
 _cow_waiting_state wait_mask = { .value = 0 }; // маска ожидания события таймера или датчика
 
+char *msg_table[] =
+{
+	(char[]){224,111,187,184,179,32,32,32,32,32,32,0},	// долив        
+	(char[]){80,97,99,191,179,111,112,32,49,32,0},		// раствор 1
+	(char[]){80,97,99,191,179,111,112,32,50,32,0},		// раствор 2
+	(char[]){168,111,187,111,99,186,97,189,184,101,0},	// полоскание
+	(char[]){77,111,185,186,97,32,49,32,32,32,0},		// мойка 1   
+	(char[]){77,111,185,186,97,32,50,32,32,32,0},		// мойка 1
+	(char[]){80,101,182,184,188,32,54,32,32,32,0},		// режим 6
+	(char[]){79,186,111,189,192,97,189,184,101,32,0},	// окончание
+	(char[]){72,97,190,111,187,189,101,189,184,101,0},	// наполнение
+	(char[]){67,187,184,179,32,32,32,32,32,32,0}		// слив
+};
 
 void OutDataPort(uint8_t data) {
 	data=~data; // в этой версии включаем нулями, поэтому инвертируем
-	// работаем по переднему фронту
-	bit_clear(PortControl,BIT(PClatch));
 	for (uint8_t i=0;i<8;i++) {
 		bit_clear(PortControl, BIT(PCshift)); // взвели строб в 1
 		bit_write(data & 0x80, PortControl, BIT(PCdata)); // вывели бит данных
@@ -43,9 +55,12 @@ void OutDataPort(uint8_t data) {
 //		_delay_us(3);
 		data <<= 1;
 	}
+	// работаем по переднему фронту
+	bit_clear(PortControl,BIT(PClatch));
+	_delay_us(3);
 	bit_set(PortControl,BIT(PClatch)); // послали строб записи в выходы
 	bit_write(0, PortControl, BIT(PCdata)); // обнуляем вход данных (не обязательно)
-//	_delay_us(3);
+	bit_clear(PortControl,BIT(PClatch));
 }
 
 void Set_Control_Byte(uint8_t data) {
@@ -65,6 +80,8 @@ void ShowCmd(uint8_t cmd_index) {
 	lcd_pos(0x10);
 	lcd_out(buf+2); lcd_out(": "); 
 	lcd_dat(Cmd.cmd_name); lcd_hex(Cmd.cmd_data);
+	lcd_pos(0x00); lcd_out(msg_table[LastTimerDelay]);
+//	lcd_hexdigit(LastTimerDelay);
 }
 
 // Show seconds counter value 
@@ -91,6 +108,7 @@ void ShowSensors(void)
 
 void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 	timer_stop(-1); // stop all timers
+	OutDataPort(0); // reset all ports
 	state.bits.error=1;
 	state.bits.started = 0;
 	if (state.bits.config == 1) {
@@ -153,7 +171,8 @@ void Do_Command(void) {			// выполнение комманды програ�
 			Set_Control_Byte(Cmd.cmd_data);
 			break;
 		case 'T':	// инициализация таймера
-			timer_setup(hi(Cmd.cmd_data), TimersArray[lo(Cmd.cmd_data)]);
+			LastTimerDelay = lo(Cmd.cmd_data);
+			timer_setup(hi(Cmd.cmd_data), TimersArray[LastTimerDelay]);
 			timer_start(hi(Cmd.cmd_data));
 			break;
 		case 'W':  // ожидание таймера или порта
@@ -214,7 +233,7 @@ void StartProg(_cmd_type Prog[]) {
 		CmdArray = Prog;		
 		state.value = STATE_VALUE_START; // все флаги сбрасываем, кроме старта
 		lcd_clear();
-	}
+	} 
 }
 
 
@@ -233,10 +252,10 @@ void onEvent(saf_Event event)
 		} else
 			switch (event.value) {
 			case 'A': // start button
-				ProgGoToAddr = Prog2;
+				if (state.bits.started == 0) { ProgGoToAddr = Prog2; }
 				break;
 			case 'B': // start button
-				ProgGoToAddr = Prog1;
+				if (state.bits.started == 0) { ProgGoToAddr = Prog1; }
 				break;
 			case 'C': // config button
 				state.bits.config = 1;
@@ -245,6 +264,10 @@ void onEvent(saf_Event event)
 			case '*': // reset
 				ResetState();
 				lcd_init();	lcd_clear();
+				break;
+			case '#': // skip current timer / sensor
+				_reset_timer(wait_mask.bits.timer_num);
+				state.bits.waiting = 0;
 				break;
 			default:
 				break;

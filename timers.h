@@ -27,6 +27,7 @@ typedef struct {
 void timer_setup(uint8_t timer_index, uint16_t timer_count);
 void timer_start(uint8_t timer_index);
 void timer_stop(uint8_t timer_index);
+void timer_set_end_state(uint8_t timer_index);
 void timers_onEvent(saf_Event event);
 void timers_init(uint8_t TickEvent, uint16_t presc);
 void _reset_timer(uint8_t timer_index);
