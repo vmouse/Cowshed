@@ -13,6 +13,25 @@ uint8_t  _timers_event;
 uint16_t _timers_prescaler;
 uint16_t _timers_prescaler_cnt;
 
+
+char *msg_table[] =
+{
+	(char[]){224,111,187,184,179,32,32,32,32,32,32,0},	// долив
+	(char[]){80,97,99,191,179,111,112,32,49,32,0},		// раствор 1
+	(char[]){80,97,99,191,179,111,112,32,50,32,0},		// раствор 2
+	(char[]){168,111,187,111,99,186,97,189,184,101,0},	// полоскание
+	(char[]){77,111,185,186,97,32,49,32,32,32,0},		// мойка 1
+	(char[]){77,111,185,186,97,32,50,32,32,32,0},		// мойка 1
+	(char[]){80,101,182,184,188,32,54,32,32,32,0},		// режим 6
+	(char[]){79,186,111,189,192,97,189,184,101,32,0},	// окончание
+	(char[]){72,97,190,111,187,189,101,189,184,101,0},	// наполнение
+	(char[]){67,187,184,179,32,32,32,32,32,32,0}		// слив
+};
+
+char* GetTimerName(uint8_t timer_index) {
+	return msg_table[timer_index];
+}
+
 void timer_setup(uint8_t timer_index, uint16_t timer_count) {
 	if (timer_index < TIMERS_MAX ) {
 		_timers_table.timer_state[timer_index] = TIMER_STATE_STOP;

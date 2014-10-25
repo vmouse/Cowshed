@@ -5,6 +5,7 @@
  *  Author: vlad
  */ 
 #include "Menu.h"
+#include "timers.h"
 #include "ProgArray.h"
 #include "keymatrix.h"
 #include "ds1307.h"
@@ -18,12 +19,13 @@ const _MenuItem MenuItems[] = {
 	{"Set Date", MENU_ITEM_SET_DATE},		
 };
 
+
 void ShowMenuItem(_cow_state *state) {
 	char buf[sizeof("##:##:##")];
 	if ((*state).bits.settimers == 1) {
 		// вывод значения таймера
 		lcd_clear();
-		lcd_pos(0x04);	lcd_out("Timer: "); lcd_hexdigit(SelectedTimer);
+		lcd_pos(0x00);	lcd_hexdigit(SelectedTimer); lcd_dat(' '); lcd_out(GetTimerName(SelectedTimer));
 		lcd_pos(0x14);	lcd_out(SecondsToTimeStr(TimersArray[SelectedTimer], buf));
 	} else {
 		lcd_clear();

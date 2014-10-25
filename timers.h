@@ -24,6 +24,7 @@ typedef struct {
 	uint8_t	timer_state[TIMERS_MAX];
 } _timers_type;
 
+char* GetTimerName(uint8_t timer_index);
 void timer_setup(uint8_t timer_index, uint16_t timer_count);
 void timer_start(uint8_t timer_index);
 void timer_stop(uint8_t timer_index);
