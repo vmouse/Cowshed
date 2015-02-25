@@ -45,7 +45,7 @@ void OutDataPort(uint8_t data) {
 	bit_clear(PortControl,BIT(PClatch));
 	_delay_us(3);
 	bit_set(PortControl,BIT(PClatch)); // послали строб записи в выходы
-	bit_write(0, PortControl, BIT(PCdata)); // обнуляем вход данных (не обязательно)
+	bit_write(1, PortControl, BIT(PCdata)); // выставляем 1 на вход данных, т.е. в случшае помех по шине строба мы будем выключать устройства, а не включать
 	bit_clear(PortControl,BIT(PClatch));
 }
 
