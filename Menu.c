@@ -12,7 +12,7 @@
 
 const _MenuItem MenuItems[] = {
 	{"Start prog - 1", MENU_ITEM_START_1},		
-	{"Start prog - 2", MENU_ITEM_START_2},		
+	{"Start test ports", MENU_ITEM_START_2},		
 	{"Manual control", MENU_ITEM_SET_PORT_DIRECT},	
 	{"Set timers", MENU_ITEM_SET_TIMERS}, 
 	{"Set Time", MENU_ITEM_SET_TIME},		
