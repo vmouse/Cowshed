@@ -90,7 +90,7 @@ void ShowSensors(void)
 {
 	if (state.bits.config==1) return; 
 	lcd_pos(0x1E); lcd_hex(CurSensors);
-	lcd_pos(0x0E); lcd_hex(ControlPortState);
+	lcd_pos(0x10); lcd_hex(ControlPortState);
 }
 
 void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
@@ -107,9 +107,9 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 	int16_to_str(ErrorCode+1, buf, 0x30); // bcd convertion
 
 	lcd_clear();
-	lcd_pos(0x04);	lcd_out((char[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
 	ShowCmd(ErrorCode);
-	lcd_dat(' ');
+	lcd_pos(0x19); lcd_out((char[]){79,193,184,178,186,97,33,0}); // "Ошибка!"
+/*
 	switch (ErrorClass) {
 		case 0: // Execution error
 			lcd_out("Execute");
@@ -124,6 +124,7 @@ void ShowError(uint8_t ErrorClass, uint8_t ErrorCode) {
 			lcd_hex(ErrorClass);
 			break;
 	}
+*/	
 }
 
 void ShowEnd(void) {
@@ -160,7 +161,9 @@ void Do_Command(void) {			// выполнение комманды програ�
 		case 'T':	// инициализация таймера
 			LastTimerDelay = lo(Cmd.cmd_data);
 			timer_setup(hi(Cmd.cmd_data), TimersArray[LastTimerDelay]);
-			timer_start(hi(Cmd.cmd_data));
+			if (TimersArray[LastTimerDelay] != 0) {
+				timer_start(hi(Cmd.cmd_data));
+			} else timer_stop(hi(Cmd.cmd_data)); // не запускаем таймер на нулевую длительность
 			break;
 		case 'W':  // ожидание таймера или порта
 			wait_mask.value = Cmd.cmd_data;
@@ -190,13 +193,13 @@ void Do_Command(void) {			// выполнение комманды програ�
 			}															
 			break;
 		case 'C':  // замер времени таймера
-			timer_setup(hi(Cmd.cmd_data), 0);
+			timer_setup(hi(Cmd.cmd_data), -1); // стартуем с максимального времени, т.к. счетчик будет уменьшаться
 			timer_start(hi(Cmd.cmd_data));
 			break;
 		case 'S':  // сохранение времени таймера
 			time = timer_get(hi(Cmd.cmd_data));
 			if ((Cmd.cmd_data & 0b00001000)==0) {
-				time = 0-time;
+				time = 1-time;  // стартовали с -1 и лишнюю секунду надо компенсировать
 			}
 			if ((Cmd.cmd_data & 0b00000111) > 1) {
 				time = time / (Cmd.cmd_data & 0b00000111);
@@ -476,8 +479,8 @@ ProcessInput(0x32);
 	timers_init(EVENT_INT0, 0);
 
 	lcd_clear();
-	lcd_pos(0x03); lcd_out("Cowshed-2");
-
+	lcd_pos(0x03); 
+	lcd_out((char[]){75,111,112,111,179,189,184,186,45,50,0}); // "Коровник-2"
 	// Start
 	sei();
 
